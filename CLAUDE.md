@@ -101,6 +101,21 @@ payload ou une réponse API destinés au front recruteur.
   `angular` pour les `*.html`). `.editorconfig` impose indent 2 espaces, quotes simples en
   `.ts`.
 
+## Conventions UI — mobile-first (NON NÉGOCIABLE)
+
+Toute interface se construit d'abord pour l'écran mobile, puis s'étend vers le desktop.
+
+- Styles Tailwind sans préfixe = base mobile ; les breakpoints (`sm:`, `md:`, `lg:`, `xl:`)
+  n'ajoutent que les adaptations pour les écrans plus grands. Ne jamais faire l'inverse
+  (styliser desktop par défaut puis restreindre en mobile avec des breakpoints négatifs).
+- Concevoir chaque écran/composant en pensant d'abord layout à une colonne, zones tactiles
+  suffisantes (cibles ≥ ~44px), navigation accessible au pouce, contenu qui ne déborde jamais
+  horizontalement.
+- Tester visuellement en largeur mobile (~375–430px) avant d'élargir vers tablette/desktop.
+- S'applique à tous les écrans du produit (parcours étudiant, parcours recruteur,
+  back-office modération) — le back-office n'est pas exempté même s'il est probablement
+  consulté aussi depuis un desktop.
+
 ## Section projet (à compléter au fil du développement)
 
 - Backend : `D:\projet\helene\app-mobile\studentapi` (NestJS, repo Git séparé). C'est là que
