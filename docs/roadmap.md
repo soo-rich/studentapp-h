@@ -14,8 +14,9 @@ back et front peuvent souvent avancer en parallèle une fois le contrat d'API de
       auth, rôles (étudiant / recruteur / modérateur), erreurs standard
       → `studentapi/docs/openapi.yaml` v0.1.0
 - [ ] Backend : setup auth (stratégie JWT ou session), modules de base NestJS (users, auth)
-- [ ] Front : setup thème Angular Material + Tailwind, structure des routes par rôle
+- [x] Front : setup thème Angular Material + Tailwind, structure des routes par rôle
       (public / étudiant / recruteur / back-office modération), guards de rôle
+      → thème M3 + 4 layouts mobile-first + roleGuard (auth stubbée, à brancher Épic 1)
 - [ ] Décider le stockage des documents de vérification (upload carte étudiant, pièce
       d'identité, justificatif entreprise) — service de fichiers/S3 compatible
 
