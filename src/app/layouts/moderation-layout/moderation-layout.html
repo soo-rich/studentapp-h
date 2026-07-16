@@ -1,0 +1,16 @@
+<div class="flex min-h-dvh w-full flex-col overflow-x-hidden">
+  <mat-toolbar color="primary" class="flex min-h-14 items-center gap-2 px-4">
+    <a
+      routerLink="/"
+      aria-label="Retour à l'accueil"
+      class="flex min-h-11 min-w-11 items-center justify-center"
+    >
+      <mat-icon>home</mat-icon>
+    </a>
+    <span class="text-base font-medium sm:text-lg">Back-office modération</span>
+  </mat-toolbar>
+
+  <main class="mx-auto w-full max-w-screen-md flex-1 px-4 py-6 sm:px-6 lg:max-w-screen-lg lg:px-8">
+    <router-outlet />
+  </main>
+</div>
