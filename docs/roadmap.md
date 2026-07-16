@@ -10,8 +10,9 @@ back et front peuvent souvent avancer en parallèle une fois le contrat d'API de
 
 ## Épic 0 — Fondations techniques
 
-- [ ] Définir le contrat d'API initial (OpenAPI) partagé entre `studentapp` et `studentapi` :
+- [x] Définir le contrat d'API initial (OpenAPI) partagé entre `studentapp` et `studentapi` :
       auth, rôles (étudiant / recruteur / modérateur), erreurs standard
+      → `studentapi/docs/openapi.yaml` v0.1.0
 - [ ] Backend : setup auth (stratégie JWT ou session), modules de base NestJS (users, auth)
 - [ ] Front : setup thème Angular Material + Tailwind, structure des routes par rôle
       (public / étudiant / recruteur / back-office modération), guards de rôle

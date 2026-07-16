@@ -121,8 +121,10 @@ Toute interface se construit d'abord pour l'écran mobile, puis s'étend vers le
 - Backend : `D:\projet\helene\app-mobile\studentapi` (NestJS, repo Git séparé). C'est là que
   vivent l'API, les DTO, le schéma de données et les contrats consommés par ce front — ce
   fichier évoluera au fil du développement à mesure que le backend se précise.
-- Contrat d'API : à définir conjointement avec `studentapi` (pas encore d'OpenAPI/schéma figé
-  dans ce repo front) — toute modification de contrat reste du ressort de l'orchestrateur, pas
+- Contrat d'API : `D:\projet\helene\app-mobile\studentapi\docs\openapi.yaml` (source de vérité,
+  vit côté backend). V0.1.0 couvre Épic 0 : auth (`/auth/register`, `/login`, `/refresh`,
+  `/logout`, `/me`), rôles (`etudiant`/`recruteur`/`moderateur`), format d'erreur standard.
+  Sera étendu épic par épic — toute modification reste du ressort de l'orchestrateur, pas
   d'un agent d'implémentation.
 - Génération services front : n/a pour l'instant (pas de client HTTP généré) — une fois le
   contrat `studentapi` stabilisé, évaluer `api-forge` si une spec OpenAPI/Postman est exportée.
