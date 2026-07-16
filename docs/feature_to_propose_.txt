@@ -1,0 +1,12 @@
+Feature:
+
+* Les écrans de l'application ;
+* Toutes les fonctionnalités ;
+* Le parcours d'un étudiant ;
+* Le parcours d'un recruteur ;
+* Les notifications ;
+* le système de recherche ;
+* Le système de matching entre offres et profils.
+* vie seule ou avec les parents/tuteurs
+* Aptitudes (handicap/ non)
+* Allergie
