@@ -1,0 +1,15 @@
+<div class="inline-flex max-w-full flex-col gap-1" role="status" [attr.aria-label]="ariaLabel()">
+  <span
+    class="inline-flex w-fit max-w-full items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium"
+    [class]="toneClasses()"
+  >
+    <mat-icon aria-hidden="true" class="!h-4 !w-4 !text-[16px] !leading-4">{{ icon() }}</mat-icon>
+    <span>{{ label() }}</span>
+  </span>
+
+  @if (displayedRejectionReason(); as reason) {
+    <p class="max-w-full text-xs whitespace-normal break-words text-red-700">
+      Motif : {{ reason }}
+    </p>
+  }
+</div>
