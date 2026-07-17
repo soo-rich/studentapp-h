@@ -18,8 +18,15 @@ back et front peuvent souvent avancer en parallèle une fois le contrat d'API de
 - [x] Front : setup thème Angular Material + Tailwind, structure des routes par rôle
       (public / étudiant / recruteur / back-office modération), guards de rôle
       → thème M3 + 4 layouts mobile-first + roleGuard (auth stubbée, à brancher Épic 1)
-- [ ] Décider le stockage des documents de vérification (upload carte étudiant, pièce
+- [x] Décider le stockage des documents de vérification (upload carte étudiant, pièce
       d'identité, justificatif entreprise) — service de fichiers/S3 compatible
+      → **Décision : object storage S3-compatible.** Buckets privés (jamais publics),
+      accès par URLs présignées courte durée uniquement. Service NestJS abstrait
+      (provider swappable). Dev : MinIO via docker-compose. Prod : tout fournisseur
+      S3-compatible. Données sensibles (carte étudiant, pièce d'identité) : accès
+      restreint équipe de modération, jamais exposées au front recruteur. Implémentation
+      de l'upload = Épic 1 (ajout du service storage + dépendance client S3/MinIO à
+      valider à ce moment-là).
 
 ## Épic 1 — Authentification & vérification des profils
 
