@@ -1,0 +1,113 @@
+import { HttpErrorResponse } from '@angular/common/http';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCardModule } from '@angular/material/card';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { Router } from '@angular/router';
+
+import { injectRegisterMutation } from '../../../core/auth/auth.queries';
+import { RegisterRequest } from '../../../core/auth/auth.types';
+import { SessionService } from '../../../core/auth/session.service';
+
+/**
+ * Corps attendu dans `HttpErrorResponse.error` sur un 409/422 de `POST /auth/register`
+ * (contrat `studentapi` v0.2.0, `components.schemas.ErrorResponse`). Redéfini localement,
+ * en LECTURE SEULE pour ce composant : ce n'est pas le contrat partagé, seulement la forme
+ * minimale nécessaire pour extraire `message` en toute sécurité de typage — jamais parsé,
+ * uniquement affiché tel quel (déjà traduit fr/en par le backend).
+ */
+interface RegisterErrorBody {
+  message: string;
+}
+
+function isRegisterErrorBody(value: unknown): value is RegisterErrorBody {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    typeof (value as { message?: unknown }).message === 'string'
+  );
+}
+
+const GENERIC_ERROR_MESSAGE = 'Une erreur est survenue. Réessaie dans un instant.';
+
+/**
+ * Extrait le message traduit d'une erreur `POST /auth/register` (`ErrorResponse.message`),
+ * sans jamais parser son contenu. Retombe sur un message générique si la forme de l'erreur
+ * est inattendue (ex. panne réseau, pas de réponse JSON du backend).
+ */
+function extractErrorMessage(error: Error): string {
+  if (error instanceof HttpErrorResponse && isRegisterErrorBody(error.error)) {
+    return error.error.message;
+  }
+  return GENERIC_ERROR_MESSAGE;
+}
+
+/**
+ * Écran d'inscription recruteur — `POST /auth/register` avec `role` fixé à `'recruteur'`
+ * (jamais un champ de saisie, voir `RegisterRequest` du contrat `studentapi`).
+ *
+ * Soumission via `injectRegisterMutation` (FE2, TanStack Query) — aucun `HttpClient`/`fetch`
+ * direct ici. Succès -> `SessionService.setSession(authResponse)` puis redirection
+ * `/recruteur`. Le token Bearer est géré par `authInterceptor` (FE3), qui exclut de toute
+ * façon `/auth/register` — rien à faire ici de ce côté.
+ */
+@Component({
+  selector: 'app-register-recruteur',
+  imports: [
+    ReactiveFormsModule,
+    MatButtonModule,
+    MatCardModule,
+    MatFormFieldModule,
+    MatIconModule,
+    MatInputModule,
+    MatProgressSpinnerModule,
+  ],
+  templateUrl: './register-recruteur.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class RegisterRecruteur {
+  private readonly formBuilder = inject(NonNullableFormBuilder);
+  private readonly sessionService = inject(SessionService);
+  private readonly router = inject(Router);
+
+  /** Mutation TanStack `POST /auth/register` (FE2) — expose `mutate`, `isPending`, `error`. */
+  protected readonly registerMutation = injectRegisterMutation();
+
+  /**
+   * `email` (requis, format email) + `password` (requis, min 8 — cohérent avec
+   * `RegisterRequest.password.minLength: 8`). `role` n'est volontairement PAS un contrôle
+   * du formulaire : il est fixé à `'recruteur'` au moment de construire le payload, voir
+   * `onSubmit()`.
+   */
+  protected readonly form = this.formBuilder.group({
+    email: this.formBuilder.control('', [Validators.required, Validators.email]),
+    password: this.formBuilder.control('', [Validators.required, Validators.minLength(8)]),
+  });
+
+  /** Message d'erreur traduit à afficher, `null` tant qu'aucune tentative n'a échoué. */
+  protected readonly errorMessage = computed<string | null>(() => {
+    const error = this.registerMutation.error();
+    return error === null ? null : extractErrorMessage(error);
+  });
+
+  protected onSubmit(): void {
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
+
+    const { email, password } = this.form.getRawValue();
+    const payload: RegisterRequest = { email, password, role: 'recruteur' };
+
+    this.registerMutation.mutate(payload, {
+      onSuccess: (authResponse) => {
+        this.sessionService.setSession(authResponse);
+        void this.router.navigate(['/recruteur']);
+      },
+    });
+  }
+}
