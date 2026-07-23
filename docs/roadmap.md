@@ -30,13 +30,23 @@ back et front peuvent souvent avancer en parallèle une fois le contrat d'API de
 
 ## Épic 1 — Authentification & vérification des profils
 
-- [ ] Inscription / connexion étudiant
-- [ ] Inscription / connexion recruteur
-- [ ] Upload documents de vérification (étudiant : carte étudiant ou certificat de
+Backend 100% (OpenAPI v0.2.0). Front : parcours complet, routé et atteignable
+(`app.routes.ts`), suite de tests verte.
+
+- [x] Inscription / connexion étudiant
+      → écran inscription étudiant (FE4) + connexion partagée (FE6), routés
+- [x] Inscription / connexion recruteur
+      → écran inscription recruteur (T1) + connexion partagée, routés
+- [x] Upload documents de vérification (étudiant : carte étudiant ou certificat de
       scolarité ; recruteur : pièce d'identité + justificatif d'existence de la structure
       si applicable)
-- [ ] File d'attente de modération : l'équipe interne valide/rejette chaque profil
-- [ ] Badge "profil vérifié" affiché une fois validé
+      → écran upload multipart direct (T2), routé sous `etudiant/verification` et
+        `recruteur/verification` (composant partagé, types contraints par le rôle)
+- [x] File d'attente de modération : l'équipe interne valide/rejette chaque profil
+      → file paginée + détail (T4) : `moderation` / `moderation/:userId`, approve/reject
+        (motif 3-500), téléchargement proxifié des documents
+- [x] Badge "profil vérifié" affiché une fois validé
+      → composant partagé `VerificationBadge`, consommé par les écrans vérification et modération
 
 ## Épic 2 — Profil étudiant
 
