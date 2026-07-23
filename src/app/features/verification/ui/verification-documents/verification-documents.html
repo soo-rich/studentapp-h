@@ -1,0 +1,149 @@
+<section class="mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 py-6 sm:px-6">
+  <div class="flex flex-col gap-2">
+    <h1 class="text-2xl font-semibold sm:text-3xl">Documents de vérification</h1>
+    <p class="text-sm text-gray-600 sm:text-base">
+      Envoie les documents nécessaires pour faire vérifier ton profil.
+    </p>
+  </div>
+
+  @if (currentUser(); as user) {
+    <app-verification-badge
+      [status]="user.verificationStatus"
+      [rejectionReason]="user.verificationRejectionReason"
+    />
+  }
+
+  <mat-card class="flex flex-col gap-4 p-4 sm:p-6">
+    <h2 class="text-lg font-medium">Ajouter un document</h2>
+
+    <mat-form-field appearance="outline" class="w-full">
+      <mat-label>Type de document</mat-label>
+      <mat-select
+        [value]="selectedType()"
+        [disabled]="uploadMutation.isPending()"
+        (selectionChange)="onTypeChange($event)"
+        aria-label="Type de document"
+      >
+        @for (option of documentTypeOptions(); track option.value) {
+          <mat-option [value]="option.value">{{ option.label }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+    @if (typeErrorMessage(); as message) {
+      <p role="alert" aria-live="polite" class="-mt-2 text-sm text-red-700">{{ message }}</p>
+    }
+
+    <div class="flex flex-col gap-2">
+      <label for="verification-document-file" class="text-sm font-medium text-gray-700">
+        Fichier (image ou PDF, 5 Mo maximum)
+      </label>
+      <input
+        id="verification-document-file"
+        #fileInput
+        type="file"
+        accept="image/*,application/pdf"
+        class="file:min-h-11 block min-h-11 w-full rounded-md border border-gray-300 text-sm file:mr-3 file:rounded-md file:border-0 file:bg-gray-100 file:px-3 file:py-2"
+        [disabled]="uploadMutation.isPending()"
+        (change)="onFileSelected($event)"
+      />
+      @if (selectedFile(); as file) {
+        <p class="truncate text-xs text-gray-500">
+          {{ file.name }} · {{ formatFileSize(file.size) }}
+        </p>
+      }
+    </div>
+    @if (fileErrorMessage(); as message) {
+      <p role="alert" aria-live="polite" class="-mt-2 text-sm text-red-700">{{ message }}</p>
+    }
+
+    @if (uploadErrorMessage(); as message) {
+      <p
+        role="alert"
+        aria-live="polite"
+        class="flex min-h-11 items-center gap-2 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700"
+      >
+        <mat-icon aria-hidden="true" class="!h-5 !w-5 !text-[20px] !leading-5">error</mat-icon>
+        <span>{{ message }}</span>
+      </p>
+    }
+
+    <button
+      id="verification-submit-button"
+      mat-flat-button
+      color="primary"
+      type="button"
+      class="flex min-h-11 w-full items-center justify-center gap-2"
+      [disabled]="uploadMutation.isPending()"
+      (click)="onSubmit()"
+    >
+      @if (uploadMutation.isPending()) {
+        <mat-spinner diameter="20" aria-hidden="true" />
+      }
+      <span>{{ uploadMutation.isPending() ? 'Envoi en cours…' : 'Envoyer' }}</span>
+    </button>
+  </mat-card>
+
+  <mat-card class="flex flex-col gap-4 p-4 sm:p-6">
+    <h2 class="text-lg font-medium">Mes documents</h2>
+
+    @if (documentsQuery.isPending()) {
+      <div class="flex items-center justify-center gap-2 py-6 text-sm text-gray-600">
+        <mat-spinner diameter="24" aria-hidden="true" />
+        <span>Chargement des documents…</span>
+      </div>
+    } @else if (queryErrorMessage(); as message) {
+      <p role="alert" aria-live="polite" class="text-sm text-red-700">{{ message }}</p>
+    } @else if (documentsQuery.data(); as documents) {
+      @if (documents.length === 0) {
+        <p class="text-sm text-gray-600">Aucun document envoyé pour l'instant.</p>
+      } @else {
+        @if (isVerified()) {
+          <p class="text-xs text-gray-500">
+            Ton profil est vérifié : les documents ne peuvent plus être supprimés.
+          </p>
+        }
+
+        <ul class="flex flex-col divide-y divide-gray-200">
+          @for (document of documents; track document.id) {
+            <li class="flex items-center justify-between gap-3 py-3">
+              <div class="flex min-w-0 flex-col gap-0.5">
+                <span class="truncate text-sm font-medium">{{ document.originalFilename }}</span>
+                <span class="truncate text-xs text-gray-500">
+                  {{ documentTypeLabel(document.type) }} ·
+                  {{ formatFileSize(document.sizeBytes) }} ·
+                  {{ formatDate(document.uploadedAt) }}
+                </span>
+              </div>
+
+              <button
+                mat-icon-button
+                type="button"
+                class="!h-11 !w-11 shrink-0"
+                [attr.aria-label]="'Supprimer ' + document.originalFilename"
+                [disabled]="!canDeleteDocuments() || isDeleting(document.id)"
+                (click)="onDelete(document.id)"
+              >
+                @if (isDeleting(document.id)) {
+                  <mat-spinner diameter="20" aria-hidden="true" />
+                } @else {
+                  <mat-icon aria-hidden="true">delete</mat-icon>
+                }
+              </button>
+            </li>
+          }
+        </ul>
+      }
+    }
+
+    @if (deleteErrorMessage(); as message) {
+      <p
+        role="alert"
+        aria-live="polite"
+        class="flex min-h-11 items-center gap-2 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700"
+      >
+        <mat-icon aria-hidden="true" class="!h-5 !w-5 !text-[20px] !leading-5">error</mat-icon>
+        <span>{{ message }}</span>
+      </p>
+    }
+  </mat-card>
+</section>
