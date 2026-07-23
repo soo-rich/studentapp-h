@@ -271,6 +271,11 @@ describe('VerificationDocuments', () => {
       ],
     });
 
+    await vi.waitFor(() => {
+      fixture.detectChanges();
+      expect(fixture.nativeElement.textContent).toContain('certificat.pdf');
+    });
+
     const text = fixture.nativeElement.textContent as string;
     expect(text).toContain('certificat.pdf');
     expect(text).toContain('Certificat de scolarité');
@@ -281,19 +286,33 @@ describe('VerificationDocuments', () => {
   it('shows a message when no document has been uploaded yet', async () => {
     await setup({ role: 'etudiant', documents: [] });
 
-    expect(fixture.nativeElement.textContent).toContain("Aucun document envoyé pour l'instant.");
+    await vi.waitFor(() => {
+      fixture.detectChanges();
+      expect(fixture.nativeElement.textContent).toContain(
+        "Aucun document envoyé pour l'instant.",
+      );
+    });
   });
 
   it('calls the delete mutation with the document id when the delete button is clicked', async () => {
     await setup({ role: 'etudiant', documents: [buildDocument({ id: 'doc-7' })] });
     verificationApiMock.delete.mockReturnValue(of(undefined));
 
+    await vi.waitFor(() => {
+      fixture.detectChanges();
+      expect(
+        fixture.nativeElement.querySelector('button[aria-label="Supprimer carte.pdf"]'),
+      ).not.toBeNull();
+    });
+
     const deleteButton = fixture.nativeElement.querySelector(
       'button[aria-label="Supprimer carte.pdf"]',
     ) as HTMLButtonElement;
     deleteButton.click();
 
-    expect(verificationApiMock.delete).toHaveBeenCalledWith('doc-7');
+    await vi.waitFor(() => {
+      expect(verificationApiMock.delete).toHaveBeenCalledWith('doc-7');
+    });
   });
 
   it('shows the translated error message when the delete mutation fails (e.g. 409 already verified)', async () => {
@@ -309,6 +328,13 @@ describe('VerificationDocuments', () => {
       },
     });
     verificationApiMock.delete.mockReturnValue(throwError(() => errorResponse));
+
+    await vi.waitFor(() => {
+      fixture.detectChanges();
+      expect(
+        fixture.nativeElement.querySelector('button[aria-label="Supprimer carte.pdf"]'),
+      ).not.toBeNull();
+    });
 
     const deleteButton = fixture.nativeElement.querySelector(
       'button[aria-label="Supprimer carte.pdf"]',
@@ -328,6 +354,13 @@ describe('VerificationDocuments', () => {
       role: 'etudiant',
       user: buildUser({ verificationStatus: 'verified' }),
       documents: [buildDocument({ id: 'doc-9' })],
+    });
+
+    await vi.waitFor(() => {
+      fixture.detectChanges();
+      expect(
+        fixture.nativeElement.querySelector('button[aria-label="Supprimer carte.pdf"]'),
+      ).not.toBeNull();
     });
 
     const deleteButton = fixture.nativeElement.querySelector(
