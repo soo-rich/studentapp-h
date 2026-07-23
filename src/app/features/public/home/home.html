@@ -14,8 +14,13 @@
         Trouve un job compatible avec tes cours : ton profil n'est jamais transmis brut au
         recruteur, il passe d'abord par une équipe de modération.
       </mat-card-content>
-      <button mat-flat-button color="primary" disabled class="min-h-11 w-fit">
-        Se connecter (bientôt disponible)
+      <button
+        mat-flat-button
+        color="primary"
+        routerLink="/register-etudiant"
+        class="min-h-11 w-fit"
+      >
+        S'inscrire
       </button>
     </mat-card>
 
@@ -25,9 +30,18 @@
         Publie un besoin (job, mission, stage) et reçois une liste de candidats déjà validée par
         l'équipe de modération.
       </mat-card-content>
-      <button mat-flat-button color="primary" disabled class="min-h-11 w-fit">
-        Se connecter (bientôt disponible)
+      <button
+        mat-flat-button
+        color="primary"
+        routerLink="/register-recruteur"
+        class="min-h-11 w-fit"
+      >
+        S'inscrire
       </button>
     </mat-card>
   </div>
+
+  <button mat-stroked-button color="primary" routerLink="/login" class="min-h-11 w-full">
+    Se connecter
+  </button>
 </section>

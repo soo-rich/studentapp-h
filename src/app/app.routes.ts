@@ -3,10 +3,9 @@ import { Routes } from '@angular/router';
 import { roleGuard } from './core/auth/role.guard';
 
 /**
- * Arborescence de routes par espace (Épic 0 — squelette de navigation) :
- * public / étudiant / recruteur / back-office modération. Chaque espace lazy-loade son
- * layout et ses pages ; les espaces protégés utilisent `roleGuard` (état d'auth STUB,
- * voir `core/auth/session.service.ts`).
+ * Arborescence de routes par espace (Épic 1) : public / étudiant / recruteur / back-office
+ * modération. Chaque espace lazy-loade son layout et ses pages ; les espaces protégés
+ * utilisent `roleGuard` (état d'auth STUB, voir `core/auth/session.service.ts`).
  */
 export const routes: Routes = [
   {
@@ -17,6 +16,24 @@ export const routes: Routes = [
       {
         path: '',
         loadComponent: () => import('./features/public/home/home').then((m) => m.Home),
+      },
+      {
+        path: 'login',
+        loadComponent: () => import('./features/public/login/login').then((m) => m.Login),
+      },
+      {
+        path: 'register-etudiant',
+        loadComponent: () =>
+          import('./features/public/register-etudiant/register-etudiant').then(
+            (m) => m.RegisterEtudiant,
+          ),
+      },
+      {
+        path: 'register-recruteur',
+        loadComponent: () =>
+          import('./features/public/register-recruteur/register-recruteur').then(
+            (m) => m.RegisterRecruteur,
+          ),
       },
     ],
   },
@@ -31,6 +48,13 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/etudiant/dashboard/dashboard').then((m) => m.EtudiantDashboard),
       },
+      {
+        path: 'verification',
+        loadComponent: () =>
+          import('./features/verification/ui/verification-documents/verification-documents').then(
+            (m) => m.VerificationDocuments,
+          ),
+      },
     ],
   },
   {
@@ -44,6 +68,13 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/recruteur/dashboard/dashboard').then((m) => m.RecruteurDashboard),
       },
+      {
+        path: 'verification',
+        loadComponent: () =>
+          import('./features/verification/ui/verification-documents/verification-documents').then(
+            (m) => m.VerificationDocuments,
+          ),
+      },
     ],
   },
   {
@@ -55,7 +86,12 @@ export const routes: Routes = [
       {
         path: '',
         loadComponent: () =>
-          import('./features/moderation/dashboard/dashboard').then((m) => m.ModerationDashboard),
+          import('./features/moderation/queue/queue').then((m) => m.ModerationQueue),
+      },
+      {
+        path: ':userId',
+        loadComponent: () =>
+          import('./features/moderation/detail/detail').then((m) => m.ModerationDetail),
       },
     ],
   },
