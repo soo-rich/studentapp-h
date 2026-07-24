@@ -1,0 +1,189 @@
+<section class="mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 py-6 sm:px-6">
+  <div class="flex items-center justify-between gap-2">
+    <h1 class="text-2xl font-semibold sm:text-3xl">Profil étudiant</h1>
+    <a mat-stroked-button routerLink="/moderation" class="min-h-11">Retour</a>
+  </div>
+
+  @if (profileQuery.isPending()) {
+    <div class="flex items-center justify-center gap-2 py-10 text-sm text-gray-600">
+      <mat-spinner diameter="24" aria-hidden="true" />
+      <span>Chargement du profil…</span>
+    </div>
+  } @else if (isProfileNotFound()) {
+    <p class="text-sm text-gray-600">Profil non renseigné.</p>
+  } @else if (profileLoadErrorMessage(); as message) {
+    <p role="alert" aria-live="polite" class="text-sm text-red-700">{{ message }}</p>
+  } @else if (profileQuery.data(); as profile) {
+    <mat-card class="flex flex-col gap-3 p-4 sm:p-6">
+      <span class="min-w-0 truncate text-lg font-medium">
+        {{ profile.firstName }} {{ profile.lastName }}
+      </span>
+      <dl class="grid grid-cols-1 gap-1 text-sm text-gray-600 sm:grid-cols-2">
+        @if (profile.phoneNumber) {
+          <div>
+            <dt class="inline font-medium text-gray-700">Téléphone :</dt>
+            <dd class="inline">{{ profile.phoneNumber }}</dd>
+          </div>
+        }
+        <div>
+          <dt class="inline font-medium text-gray-700">Lieu de résidence :</dt>
+          <dd class="inline">{{ profile.residenceLocation }}</dd>
+        </div>
+        <div>
+          <dt class="inline font-medium text-gray-700">Dernière mise à jour :</dt>
+          <dd class="inline">{{ profile.updatedAt | date: 'dd/MM/yyyy' : 'UTC' }}</dd>
+        </div>
+      </dl>
+    </mat-card>
+
+    <mat-card class="flex flex-col gap-3 p-4 sm:p-6">
+      <h2 class="text-lg font-medium">Études</h2>
+      <dl class="grid grid-cols-1 gap-1 text-sm text-gray-600 sm:grid-cols-2">
+        <div>
+          <dt class="inline font-medium text-gray-700">Université :</dt>
+          <dd class="inline">{{ profile.university }}</dd>
+        </div>
+        <div>
+          <dt class="inline font-medium text-gray-700">Numéro de carte étudiant :</dt>
+          <dd class="inline">{{ profile.studentCardNumber }}</dd>
+        </div>
+        <div>
+          <dt class="inline font-medium text-gray-700">Filière :</dt>
+          <dd class="inline">{{ profile.fieldOfStudy }}</dd>
+        </div>
+        <div>
+          <dt class="inline font-medium text-gray-700">Niveau d'étude :</dt>
+          <dd class="inline">{{ profile.studyLevel }}</dd>
+        </div>
+      </dl>
+    </mat-card>
+
+    <mat-card class="flex flex-col gap-4 p-4 sm:p-6">
+      <h2 class="text-lg font-medium">Compétences et langues</h2>
+
+      <div class="flex flex-col gap-1">
+        <h3 class="text-sm font-medium text-gray-700">Compétences</h3>
+        @if (profile.skills.length === 0) {
+          <p class="text-sm text-gray-600">Aucune compétence renseignée.</p>
+        } @else {
+          <ul class="flex flex-wrap gap-2">
+            @for (skill of profile.skills; track skill) {
+              <li class="rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700">{{ skill }}</li>
+            }
+          </ul>
+        }
+      </div>
+
+      <div class="flex flex-col gap-1">
+        <h3 class="text-sm font-medium text-gray-700">Langues</h3>
+        @if (profile.languages.length === 0) {
+          <p class="text-sm text-gray-600">Aucune langue renseignée.</p>
+        } @else {
+          <ul class="flex flex-wrap gap-2">
+            @for (language of profile.languages; track language) {
+              <li class="rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700">{{ language }}</li>
+            }
+          </ul>
+        }
+      </div>
+
+      @if (profile.experiences) {
+        <div class="flex flex-col gap-1">
+          <h3 class="text-sm font-medium text-gray-700">Expériences</h3>
+          <p class="whitespace-pre-line text-sm text-gray-600">{{ profile.experiences }}</p>
+        </div>
+      }
+    </mat-card>
+
+    <mat-card class="flex flex-col gap-3 p-4 sm:p-6">
+      <h2 class="text-lg font-medium">Disponibilités</h2>
+      @if (profile.availabilitySlots.length === 0) {
+        <p class="text-sm text-gray-600">Aucun créneau renseigné.</p>
+      } @else {
+        <ul class="flex flex-col divide-y divide-gray-200">
+          @for (slot of profile.availabilitySlots; track $index) {
+            <li class="flex items-center justify-between gap-3 py-2 text-sm text-gray-700">
+              <span class="font-medium">{{ dayOfWeekLabel(slot.dayOfWeek) }}</span>
+              <span>{{ slot.startTime }} – {{ slot.endTime }}</span>
+            </li>
+          }
+        </ul>
+      }
+    </mat-card>
+
+    <mat-card class="flex flex-col gap-3 p-4 sm:p-6">
+      <h2 class="text-lg font-medium">Opportunités recherchées</h2>
+      @if (profile.opportunityTypes.length === 0) {
+        <p class="text-sm text-gray-600">Aucun type renseigné.</p>
+      } @else {
+        <ul class="flex flex-wrap gap-2">
+          @for (type of profile.opportunityTypes; track type) {
+            <li class="rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700">
+              {{ opportunityTypeLabel(type) }}
+            </li>
+          }
+        </ul>
+      }
+    </mat-card>
+
+    <mat-card class="flex flex-col gap-4 border-2 border-amber-300 bg-amber-50 p-4 sm:p-6">
+      <div class="flex flex-wrap items-center gap-2">
+        <mat-icon aria-hidden="true" class="!text-amber-700">lock</mat-icon>
+        <h2 class="text-lg font-medium text-amber-900">Informations sensibles</h2>
+        <span
+          id="restricted-badge"
+          class="ml-auto inline-flex min-h-6 items-center rounded-full bg-amber-200 px-2 py-0.5 text-xs font-semibold tracking-wide text-amber-900 uppercase"
+        >
+          Accès restreint
+        </span>
+      </div>
+
+      <p class="text-sm text-amber-900">
+        Ces informations sensibles sont réservées à l'équipe de modération : elles ne sont
+        jamais transmises aux recruteurs.
+      </p>
+
+      @if (!profile.sensitiveDataConsent) {
+        <p class="text-sm text-amber-900">
+          L'étudiant n'a pas consenti à la collecte de ces informations sensibles.
+        </p>
+      } @else {
+        <dl class="grid grid-cols-1 gap-2 text-sm text-amber-900">
+          <div>
+            <dt class="inline font-medium">Situation de logement :</dt>
+            <dd class="inline">{{ housingSituationLabel(profile.housingSituation) }}</dd>
+          </div>
+          <div>
+            <dt class="inline font-medium">Aptitude / handicap :</dt>
+            <!--
+              Distingue « Non » (l'étudiant a répondu non) de « Non renseigné » (champ
+              jamais rempli) : sur une donnée de handicap, confondre les deux serait une
+              inexactitude factuelle pour l'équipe de modération.
+            -->
+            @if (profile.hasDisability === null || profile.hasDisability === undefined) {
+              <dd class="inline">Non renseigné</dd>
+            } @else {
+              <dd class="inline">{{ profile.hasDisability ? 'Oui' : 'Non' }}</dd>
+            }
+          </div>
+          @if (profile.hasDisability && profile.disabilityDescription) {
+            <div>
+              <dt class="inline font-medium">Précision :</dt>
+              <dd class="inline">{{ profile.disabilityDescription }}</dd>
+            </div>
+          }
+          <div>
+            <dt class="inline font-medium">Allergies :</dt>
+            <dd class="inline">{{ profile.allergies ?? 'Non renseigné' }}</dd>
+          </div>
+          @if (profile.sensitiveDataConsentAt) {
+            <div>
+              <dt class="inline font-medium">Consentement donné le :</dt>
+              <dd class="inline">{{ profile.sensitiveDataConsentAt | date: 'dd/MM/yyyy' : 'UTC' }}</dd>
+            </div>
+          }
+        </dl>
+      }
+    </mat-card>
+  }
+</section>

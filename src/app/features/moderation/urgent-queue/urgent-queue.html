@@ -1,0 +1,163 @@
+<section class="mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 py-6 sm:px-6">
+  <div class="flex flex-col gap-2">
+    <h1 class="text-2xl font-semibold sm:text-3xl">Demandes d'urgence</h1>
+    <p class="text-sm text-gray-600 sm:text-base">
+      Consulte les demandes déposées par les étudiants et classe-les en priorité ou écarte-les
+      après examen.
+    </p>
+  </div>
+
+  <mat-button-toggle-group
+    class="flex w-full flex-wrap"
+    [value]="status()"
+    (change)="onStatusChange($event)"
+    aria-label="Filtrer par statut"
+  >
+    @for (option of statusFilterOptions; track option.value) {
+      <mat-button-toggle [value]="option.value" class="min-h-11 flex-1">
+        {{ option.label }}
+      </mat-button-toggle>
+    }
+  </mat-button-toggle-group>
+
+  @if (actionErrorMessage(); as message) {
+    <p role="alert" aria-live="polite" class="text-sm text-red-700">{{ message }}</p>
+  }
+
+  @if (queueQuery.isPending()) {
+    <div class="flex items-center justify-center gap-2 py-10 text-sm text-gray-600">
+      <mat-spinner diameter="24" aria-hidden="true" />
+      <span>Chargement de la file…</span>
+    </div>
+  } @else if (loadErrorMessage(); as message) {
+    <p role="alert" aria-live="polite" class="text-sm text-red-700">{{ message }}</p>
+  } @else if (queueQuery.data(); as page) {
+    @if (page.items.length === 0) {
+      <p class="text-sm text-gray-600">Aucune demande pour ce filtre.</p>
+    } @else {
+      <ul class="flex flex-col gap-3">
+        @for (item of page.items; track item.id) {
+          <li class="flex flex-col gap-3 rounded-md border border-gray-200 p-4">
+            <div class="flex flex-wrap items-start justify-between gap-2">
+              <span class="min-w-0 flex-1 break-words text-sm font-medium">{{ item.message }}</span>
+              <span
+                class="shrink-0 rounded-full px-2 py-0.5 text-xs font-medium {{
+                  statusBadgeClasses(item.status)
+                }}"
+              >
+                {{ statusLabel(item.status) }}
+              </span>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2 text-xs text-gray-600">
+              <span class="min-w-0 truncate">{{ item.user.email }}</span>
+              <span aria-hidden="true">·</span>
+              <span>{{ roleLabel(item.user.role) }}</span>
+              <span aria-hidden="true">·</span>
+              <span>Déposée le {{ item.createdAt | date: 'dd/MM/yyyy' : 'UTC' }}</span>
+            </div>
+
+            @if (item.moderatorNote !== null) {
+              <p class="text-xs break-words text-gray-600">
+                Note de modération : {{ item.moderatorNote }}
+                @if (item.reviewedAt !== null) {
+                  <span> (traitée le {{ item.reviewedAt | date: 'dd/MM/yyyy' : 'UTC' }})</span>
+                }
+              </p>
+            }
+
+            @if (item.status === 'pending') {
+              @if (isActionOpenFor(item.id)) {
+                <form
+                  [formGroup]="noteForm"
+                  (ngSubmit)="onConfirmAction()"
+                  novalidate
+                  class="flex flex-col gap-3"
+                  [attr.aria-label]="actionFormTitle()"
+                >
+                  <p class="text-sm font-medium">{{ actionFormTitle() }}</p>
+
+                  <mat-form-field appearance="outline" class="w-full">
+                    <mat-label>Note (optionnelle)</mat-label>
+                    <textarea matInput formControlName="note" rows="2" maxlength="500"></textarea>
+                    @if (noteForm.controls.note.invalid && noteForm.controls.note.touched) {
+                      <mat-error>La note ne peut pas dépasser 500 caractères.</mat-error>
+                    }
+                  </mat-form-field>
+
+                  <div class="flex flex-col gap-3 sm:flex-row">
+                    <button
+                      id="confirm-action-button"
+                      mat-flat-button
+                      color="primary"
+                      type="submit"
+                      class="min-h-11 flex-1"
+                      [disabled]="reviewMutation.isPending()"
+                    >
+                      {{ confirmButtonLabel() }}
+                    </button>
+                    <button
+                      id="cancel-action-button"
+                      mat-stroked-button
+                      type="button"
+                      class="min-h-11 flex-1"
+                      [disabled]="reviewMutation.isPending()"
+                      (click)="onCancelAction()"
+                    >
+                      Annuler
+                    </button>
+                  </div>
+                </form>
+              } @else {
+                <div class="flex flex-col gap-3 sm:flex-row">
+                  <button
+                    [id]="'prioritize-button-' + item.id"
+                    mat-stroked-button
+                    type="button"
+                    class="min-h-11 flex-1"
+                    (click)="onOpenAction(item, 'prioritize')"
+                  >
+                    Prioriser
+                  </button>
+                  <button
+                    [id]="'dismiss-button-' + item.id"
+                    mat-stroked-button
+                    type="button"
+                    class="min-h-11 flex-1"
+                    (click)="onOpenAction(item, 'dismiss')"
+                  >
+                    Écarter
+                  </button>
+                </div>
+              }
+            }
+          </li>
+        }
+      </ul>
+
+      <div class="flex items-center justify-between gap-3 pt-2">
+        <button
+          id="previous-page-button"
+          mat-stroked-button
+          type="button"
+          class="min-h-11"
+          [disabled]="!canGoPrevious()"
+          (click)="onPreviousPage()"
+        >
+          Précédent
+        </button>
+        <span class="text-sm text-gray-600">Page {{ page.page }}</span>
+        <button
+          id="next-page-button"
+          mat-stroked-button
+          type="button"
+          class="min-h-11"
+          [disabled]="!canGoNext()"
+          (click)="onNextPage()"
+        >
+          Suivant
+        </button>
+      </div>
+    }
+  }
+</section>
