@@ -6,6 +6,11 @@ import { User } from '../../../core/auth/auth.types';
 import { environment } from '../../../../environments/environment';
 import {
   ModerationQueueParams,
+  ModerationUrgentRequest,
+  ModerationUrgentRequestPage,
+  StudentProfile,
+  UrgentQueueParams,
+  UrgentRequestReviewRequest,
   VerificationRequest,
   VerificationRequestPage,
 } from './moderation.types';
@@ -73,5 +78,50 @@ export class ModerationApiService {
   /** `POST /moderation/verifications/{userId}/reject` (corps `{ reason }`) → 200 `User` mis à jour. */
   reject(userId: string, reason: string): Observable<User> {
     return this.http.post<User>(`${this.baseUrl}/verifications/${userId}/reject`, { reason });
+  }
+
+  /**
+   * `GET /moderation/urgent-requests` → 200 `ModerationUrgentRequestPage`. Les query params
+   * (`status`, `page`, `pageSize`) ne sont ajoutés que s'ils sont définis : le backend applique
+   * ses propres défauts (`status = 'pending'`, `page = 1`, `pageSize = 20`) sinon.
+   */
+  listUrgentRequests(params: UrgentQueueParams): Observable<ModerationUrgentRequestPage> {
+    let httpParams = new HttpParams();
+
+    if (params.status !== undefined) {
+      httpParams = httpParams.set('status', params.status);
+    }
+    if (params.page !== undefined) {
+      httpParams = httpParams.set('page', params.page);
+    }
+    if (params.pageSize !== undefined) {
+      httpParams = httpParams.set('pageSize', params.pageSize);
+    }
+
+    return this.http.get<ModerationUrgentRequestPage>(`${this.baseUrl}/urgent-requests`, {
+      params: httpParams,
+    });
+  }
+
+  /**
+   * `POST /moderation/urgent-requests/{id}/review` (corps `UrgentRequestReviewRequest`) → 200
+   * `ModerationUrgentRequest` traité.
+   */
+  reviewUrgentRequest(
+    id: string,
+    body: UrgentRequestReviewRequest,
+  ): Observable<ModerationUrgentRequest> {
+    return this.http.post<ModerationUrgentRequest>(
+      `${this.baseUrl}/urgent-requests/${id}/review`,
+      body,
+    );
+  }
+
+  /**
+   * `GET /moderation/students/{userId}/profile` → 200 `StudentProfile` (vue modération, champs
+   * sensibles inclus).
+   */
+  getStudentProfile(userId: string): Observable<StudentProfile> {
+    return this.http.get<StudentProfile>(`${this.baseUrl}/students/${userId}/profile`);
   }
 }

@@ -6,7 +6,13 @@ import { environment } from '../../../../environments/environment';
 import { ModerationApiService } from './moderation-api.service';
 import { User } from '../../../core/auth/auth.types';
 import { VerificationDocument } from '../../verification/data/verification.types';
-import { VerificationRequest, VerificationRequestPage } from './moderation.types';
+import {
+  ModerationUrgentRequest,
+  ModerationUrgentRequestPage,
+  StudentProfile,
+  VerificationRequest,
+  VerificationRequestPage,
+} from './moderation.types';
 
 describe('ModerationApiService', () => {
   let service: ModerationApiService;
@@ -42,6 +48,45 @@ describe('ModerationApiService', () => {
     page: 1,
     pageSize: 20,
     total: 1,
+  };
+
+  const moderationUrgentRequest: ModerationUrgentRequest = {
+    id: 'urgent-1',
+    status: 'pending',
+    message: 'Besoin urgent de conseils, situation difficile.',
+    moderatorNote: null,
+    user,
+    createdAt: '2026-07-16T00:00:00.000Z',
+    reviewedAt: null,
+  };
+
+  const moderationUrgentRequestPage: ModerationUrgentRequestPage = {
+    items: [moderationUrgentRequest],
+    page: 1,
+    pageSize: 20,
+    total: 1,
+  };
+
+  const studentProfile: StudentProfile = {
+    userId: 'user-1',
+    firstName: 'Awa',
+    lastName: 'Koffi',
+    university: 'Université de Lomé',
+    studentCardNumber: 'UL-2026-001',
+    fieldOfStudy: 'Informatique',
+    studyLevel: 'Licence 3',
+    skills: ['JavaScript'],
+    languages: ['Français'],
+    residenceLocation: 'Lomé',
+    opportunityTypes: ['temps_partiel'],
+    availabilitySlots: [],
+    sensitiveDataConsent: true,
+    housingSituation: 'seul',
+    hasDisability: false,
+    disabilityDescription: null,
+    allergies: null,
+    sensitiveDataConsentAt: '2026-07-16T00:00:00.000Z',
+    updatedAt: '2026-07-16T00:00:00.000Z',
   };
 
   beforeEach(() => {
@@ -145,5 +190,71 @@ describe('ModerationApiService', () => {
     req.flush(rejectedUser);
 
     expect(result).toEqual(rejectedUser);
+  });
+
+  it('listUrgentRequests() GETs /moderation/urgent-requests with no query params when none are provided', () => {
+    let result: ModerationUrgentRequestPage | undefined;
+
+    service.listUrgentRequests({}).subscribe((response) => (result = response));
+
+    const req = httpMock.expectOne(`${baseUrl}/urgent-requests`);
+    expect(req.request.method).toBe('GET');
+    expect(req.request.params.keys().length).toBe(0);
+    req.flush(moderationUrgentRequestPage);
+
+    expect(result).toEqual(moderationUrgentRequestPage);
+  });
+
+  it('listUrgentRequests() GETs /moderation/urgent-requests with status, page and pageSize query params when provided', () => {
+    let result: ModerationUrgentRequestPage | undefined;
+
+    service
+      .listUrgentRequests({ status: 'pending', page: 2, pageSize: 50 })
+      .subscribe((response) => (result = response));
+
+    const req = httpMock.expectOne(
+      (r) =>
+        r.url === `${baseUrl}/urgent-requests` &&
+        r.params.get('status') === 'pending' &&
+        r.params.get('page') === '2' &&
+        r.params.get('pageSize') === '50',
+    );
+    expect(req.request.method).toBe('GET');
+    req.flush(moderationUrgentRequestPage);
+
+    expect(result).toEqual(moderationUrgentRequestPage);
+  });
+
+  it('reviewUrgentRequest() POSTs { decision, note } to /moderation/urgent-requests/{id}/review and returns ModerationUrgentRequest', () => {
+    let result: ModerationUrgentRequest | undefined;
+    const prioritizedRequest: ModerationUrgentRequest = {
+      ...moderationUrgentRequest,
+      status: 'prioritized',
+      moderatorNote: 'Cas prioritaire',
+      reviewedAt: '2026-07-17T00:00:00.000Z',
+    };
+
+    service
+      .reviewUrgentRequest('urgent-1', { decision: 'prioritize', note: 'Cas prioritaire' })
+      .subscribe((response) => (result = response));
+
+    const req = httpMock.expectOne(`${baseUrl}/urgent-requests/urgent-1/review`);
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body).toEqual({ decision: 'prioritize', note: 'Cas prioritaire' });
+    req.flush(prioritizedRequest);
+
+    expect(result).toEqual(prioritizedRequest);
+  });
+
+  it('getStudentProfile() GETs /moderation/students/{userId}/profile and returns StudentProfile', () => {
+    let result: StudentProfile | undefined;
+
+    service.getStudentProfile('user-1').subscribe((response) => (result = response));
+
+    const req = httpMock.expectOne(`${baseUrl}/students/user-1/profile`);
+    expect(req.request.method).toBe('GET');
+    req.flush(studentProfile);
+
+    expect(result).toEqual(studentProfile);
   });
 });

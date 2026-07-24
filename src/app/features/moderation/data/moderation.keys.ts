@@ -1,4 +1,4 @@
-import type { ModerationQueueParams } from './moderation.types';
+import type { ModerationQueueParams, UrgentQueueParams } from './moderation.types';
 
 /**
  * Key factory TanStack Query pour le domaine `moderation` (`/moderation/*`, réservé au rôle
@@ -11,4 +11,8 @@ export const moderationKeys = {
   verifications: (params: ModerationQueueParams) =>
     [...moderationKeys.all, 'verifications', params] as const,
   verification: (userId: string) => [...moderationKeys.all, 'verification', userId] as const,
+  urgentQueue: (params: UrgentQueueParams) =>
+    [...moderationKeys.all, 'urgent-requests', params] as const,
+  studentProfile: (userId: string) =>
+    [...moderationKeys.all, 'student-profile', userId] as const,
 };

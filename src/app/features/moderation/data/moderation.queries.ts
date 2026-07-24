@@ -5,7 +5,16 @@ import { firstValueFrom } from 'rxjs';
 import { User } from '../../../core/auth/auth.types';
 import { ModerationApiService } from './moderation-api.service';
 import { moderationKeys } from './moderation.keys';
-import { ModerationQueueParams, VerificationRequest, VerificationRequestPage } from './moderation.types';
+import {
+  ModerationQueueParams,
+  ModerationUrgentRequest,
+  ModerationUrgentRequestPage,
+  StudentProfile,
+  UrgentQueueParams,
+  UrgentRequestReviewRequest,
+  VerificationRequest,
+  VerificationRequestPage,
+} from './moderation.types';
 
 /**
  * Composables TanStack Query pour le domaine `/moderation/*` (file de vérification, réservé
@@ -91,5 +100,61 @@ export function injectRejectVerificationMutation() {
     onSuccess: (): void => {
       void queryClient.invalidateQueries({ queryKey: moderationKeys.all });
     },
+  }));
+}
+
+/**
+ * `GET /moderation/urgent-requests` — file paginée des demandes d'urgence. `params` est une
+ * fonction (pas une valeur) pour que la query key et le refetch réagissent aux changements de
+ * filtre/pagination (signal-based, cohérent avec `injectModerationQueueQuery`).
+ */
+export function injectUrgentQueueQuery(params: () => UrgentQueueParams) {
+  const moderationApi = inject(ModerationApiService);
+
+  return injectQuery(() => ({
+    queryKey: moderationKeys.urgentQueue(params()),
+    queryFn: (): Promise<ModerationUrgentRequestPage> =>
+      firstValueFrom(moderationApi.listUrgentRequests(params())),
+  }));
+}
+
+/** Variables de `injectReviewUrgentRequestMutation` : demande ciblée + décision de traitement. */
+export interface ReviewUrgentRequestVariables {
+  id: string;
+  body: UrgentRequestReviewRequest;
+}
+
+/**
+ * `POST /moderation/urgent-requests/{id}/review` — traite une demande d'urgence (classée en
+ * priorité ou écartée). Invalide `moderationKeys.all` après succès (même stratégie que
+ * `injectApproveVerificationMutation`/`injectRejectVerificationMutation`), ce qui recouvre la
+ * file des urgences (`moderationKeys.urgentQueue`, imbriquée sous `moderationKeys.all`).
+ */
+export function injectReviewUrgentRequestMutation() {
+  const moderationApi = inject(ModerationApiService);
+  const queryClient = inject(QueryClient);
+
+  return injectMutation(() => ({
+    mutationFn: ({ id, body }: ReviewUrgentRequestVariables): Promise<ModerationUrgentRequest> =>
+      firstValueFrom(moderationApi.reviewUrgentRequest(id, body)),
+    onSuccess: (): void => {
+      void queryClient.invalidateQueries({ queryKey: moderationKeys.all });
+    },
+  }));
+}
+
+/**
+ * `GET /moderation/students/{userId}/profile` — vue modération du profil complet d'un
+ * étudiant (champs sensibles inclus). Désactivée tant que `userId()` est `null` (ex. aucune
+ * demande d'urgence/ligne sélectionnée), même contrainte que `injectVerificationDetailQuery`.
+ */
+export function injectModerationStudentProfileQuery(userId: () => string | null) {
+  const moderationApi = inject(ModerationApiService);
+
+  return injectQuery(() => ({
+    queryKey: moderationKeys.studentProfile(userId() ?? ''),
+    queryFn: (): Promise<StudentProfile> =>
+      firstValueFrom(moderationApi.getStudentProfile(userId()!)),
+    enabled: userId() !== null,
   }));
 }
