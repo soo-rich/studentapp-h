@@ -55,6 +55,20 @@ export const routes: Routes = [
             (m) => m.VerificationDocuments,
           ),
       },
+      {
+        path: 'profil',
+        loadComponent: () =>
+          import('./features/profile/ui/student-profile-form/student-profile-form').then(
+            (m) => m.StudentProfileForm,
+          ),
+      },
+      {
+        path: 'urgence',
+        loadComponent: () =>
+          import('./features/urgent-request/ui/urgent-request-page/urgent-request-page').then(
+            (m) => m.UrgentRequestPage,
+          ),
+      },
     ],
   },
   {
@@ -87,6 +101,21 @@ export const routes: Routes = [
         path: '',
         loadComponent: () =>
           import('./features/moderation/queue/queue').then((m) => m.ModerationQueue),
+      },
+      // Les segments statiques DOIVENT précéder `:userId` : ce paramètre est un
+      // catch-all qui capturerait sinon « urgences » et « etudiants » comme des
+      // identifiants d'utilisateur.
+      {
+        path: 'urgences',
+        loadComponent: () =>
+          import('./features/moderation/urgent-queue/urgent-queue').then((m) => m.UrgentQueue),
+      },
+      {
+        path: 'etudiants/:userId',
+        loadComponent: () =>
+          import('./features/moderation/student-profile/student-profile').then(
+            (m) => m.ModerationStudentProfile,
+          ),
       },
       {
         path: ':userId',
