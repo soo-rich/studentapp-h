@@ -120,14 +120,19 @@
         <div formArrayName="skills" class="flex flex-col gap-2">
           <span class="text-sm font-medium text-gray-700">Compétences</span>
           @for (skill of form.controls.skills.controls; track $index) {
-            <div class="flex items-center gap-2">
-              <input
-                [attr.id]="'skill-input-' + $index"
-                [formControlName]="$index"
-                type="text"
-                class="min-h-11 w-full min-w-0 rounded-md border border-gray-300 px-3 text-sm"
-                placeholder="Ex. Gestion de projet"
-              />
+            <div class="flex items-start gap-2">
+              <mat-form-field appearance="outline" class="w-full min-w-0">
+                <mat-label>Compétence {{ $index + 1 }}</mat-label>
+                <input
+                  [id]="'skill-input-' + $index"
+                  matInput
+                  [formControlName]="$index"
+                  placeholder="Ex. Gestion de projet"
+                />
+                @if (submitAttempted() && skill.invalid) {
+                  <mat-error>{{ errorFor(skill, 'La compétence ' + ($index + 1)) }}</mat-error>
+                }
+              </mat-form-field>
               <button
                 type="button"
                 mat-icon-button
@@ -162,14 +167,19 @@
         <div formArrayName="languages" class="flex flex-col gap-2">
           <span class="text-sm font-medium text-gray-700">Langues</span>
           @for (language of form.controls.languages.controls; track $index) {
-            <div class="flex items-center gap-2">
-              <input
-                [attr.id]="'language-input-' + $index"
-                [formControlName]="$index"
-                type="text"
-                class="min-h-11 w-full min-w-0 rounded-md border border-gray-300 px-3 text-sm"
-                placeholder="Ex. Français"
-              />
+            <div class="flex items-start gap-2">
+              <mat-form-field appearance="outline" class="w-full min-w-0">
+                <mat-label>Langue {{ $index + 1 }}</mat-label>
+                <input
+                  [id]="'language-input-' + $index"
+                  matInput
+                  [formControlName]="$index"
+                  placeholder="Ex. Français"
+                />
+                @if (submitAttempted() && language.invalid) {
+                  <mat-error>{{ errorFor(language, 'La langue ' + ($index + 1)) }}</mat-error>
+                }
+              </mat-form-field>
               <button
                 type="button"
                 mat-icon-button
