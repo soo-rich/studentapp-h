@@ -1,0 +1,358 @@
+<section class="mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 py-6 sm:px-6">
+  <div class="flex flex-col gap-2">
+    <h1 class="text-2xl font-semibold sm:text-3xl">Mon profil</h1>
+    <p class="text-sm text-gray-600 sm:text-base">
+      Renseigne ton profil pour que l'équipe de modération puisse te proposer des opportunités
+      adaptées à ton emploi du temps.
+    </p>
+  </div>
+
+  @if (profileQuery.isPending()) {
+    <div class="flex items-center justify-center gap-2 py-10 text-sm text-gray-600">
+      <mat-spinner diameter="24" aria-hidden="true" />
+      <span>Chargement de ton profil…</span>
+    </div>
+  } @else if (profileLoadErrorMessage(); as message) {
+    <p role="alert" aria-live="polite" class="text-sm text-red-700">{{ message }}</p>
+  } @else {
+    <form
+      [formGroup]="form"
+      (ngSubmit)="onSubmit()"
+      novalidate
+      class="flex flex-col gap-6"
+      aria-label="Formulaire de profil étudiant"
+    >
+      <mat-card class="flex flex-col gap-4 p-4 sm:p-6">
+        <h2 class="text-lg font-medium">Identité</h2>
+
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Prénom</mat-label>
+          <input id="first-name-input" matInput formControlName="firstName" required maxlength="100" />
+          @if (submitAttempted() && form.controls.firstName.invalid) {
+            <mat-error>{{ errorFor(form.controls.firstName, 'Le prénom') }}</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Nom</mat-label>
+          <input id="last-name-input" matInput formControlName="lastName" required maxlength="100" />
+          @if (submitAttempted() && form.controls.lastName.invalid) {
+            <mat-error>{{ errorFor(form.controls.lastName, 'Le nom') }}</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Téléphone (optionnel)</mat-label>
+          <input id="phone-number-input" matInput formControlName="phoneNumber" type="tel" maxlength="30" />
+          @if (submitAttempted() && form.controls.phoneNumber.invalid) {
+            <mat-error>{{ errorFor(form.controls.phoneNumber, 'Le téléphone') }}</mat-error>
+          }
+        </mat-form-field>
+      </mat-card>
+
+      <mat-card class="flex flex-col gap-4 p-4 sm:p-6">
+        <h2 class="text-lg font-medium">Études</h2>
+
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Université</mat-label>
+          <input id="university-input" matInput formControlName="university" required maxlength="200" />
+          @if (submitAttempted() && form.controls.university.invalid) {
+            <mat-error>{{ errorFor(form.controls.university, "L'université") }}</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Numéro de carte étudiant</mat-label>
+          <input
+            id="student-card-number-input"
+            matInput
+            formControlName="studentCardNumber"
+            required
+            maxlength="100"
+          />
+          @if (submitAttempted() && form.controls.studentCardNumber.invalid) {
+            <mat-error>{{ errorFor(form.controls.studentCardNumber, 'Le numéro de carte') }}</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Filière</mat-label>
+          <input id="field-of-study-input" matInput formControlName="fieldOfStudy" required maxlength="200" />
+          @if (submitAttempted() && form.controls.fieldOfStudy.invalid) {
+            <mat-error>{{ errorFor(form.controls.fieldOfStudy, 'La filière') }}</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Niveau d'étude</mat-label>
+          <input
+            id="study-level-input"
+            matInput
+            formControlName="studyLevel"
+            required
+            maxlength="100"
+            placeholder="Ex. Licence 3, Master 1…"
+          />
+          @if (submitAttempted() && form.controls.studyLevel.invalid) {
+            <mat-error>{{ errorFor(form.controls.studyLevel, "Le niveau d'étude") }}</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Lieu de résidence</mat-label>
+          <input
+            id="residence-location-input"
+            matInput
+            formControlName="residenceLocation"
+            required
+            maxlength="200"
+            placeholder="Ex. Lomé, Agoè"
+          />
+          @if (submitAttempted() && form.controls.residenceLocation.invalid) {
+            <mat-error>{{ errorFor(form.controls.residenceLocation, 'Le lieu de résidence') }}</mat-error>
+          }
+        </mat-form-field>
+      </mat-card>
+
+      <mat-card class="flex flex-col gap-4 p-4 sm:p-6">
+        <h2 class="text-lg font-medium">Compétences et expérience</h2>
+
+        <div formArrayName="skills" class="flex flex-col gap-2">
+          <span class="text-sm font-medium text-gray-700">Compétences</span>
+          @for (skill of form.controls.skills.controls; track $index) {
+            <div class="flex items-center gap-2">
+              <input
+                [attr.id]="'skill-input-' + $index"
+                [formControlName]="$index"
+                type="text"
+                class="min-h-11 w-full min-w-0 rounded-md border border-gray-300 px-3 text-sm"
+                placeholder="Ex. Gestion de projet"
+              />
+              <button
+                type="button"
+                mat-icon-button
+                class="!h-11 !w-11 shrink-0"
+                [attr.aria-label]="'Supprimer la compétence ' + ($index + 1)"
+                (click)="onRemoveSkill($index)"
+              >
+                <mat-icon aria-hidden="true">delete</mat-icon>
+              </button>
+            </div>
+          }
+          <button type="button" mat-stroked-button class="min-h-11 w-full sm:w-auto" (click)="onAddSkill()">
+            <mat-icon aria-hidden="true">add</mat-icon>
+            Ajouter une compétence
+          </button>
+        </div>
+
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Expériences (optionnel)</mat-label>
+          <textarea
+            id="experiences-textarea"
+            matInput
+            formControlName="experiences"
+            rows="4"
+            maxlength="2000"
+          ></textarea>
+          @if (submitAttempted() && form.controls.experiences.invalid) {
+            <mat-error>{{ errorFor(form.controls.experiences, 'Le champ expériences') }}</mat-error>
+          }
+        </mat-form-field>
+
+        <div formArrayName="languages" class="flex flex-col gap-2">
+          <span class="text-sm font-medium text-gray-700">Langues</span>
+          @for (language of form.controls.languages.controls; track $index) {
+            <div class="flex items-center gap-2">
+              <input
+                [attr.id]="'language-input-' + $index"
+                [formControlName]="$index"
+                type="text"
+                class="min-h-11 w-full min-w-0 rounded-md border border-gray-300 px-3 text-sm"
+                placeholder="Ex. Français"
+              />
+              <button
+                type="button"
+                mat-icon-button
+                class="!h-11 !w-11 shrink-0"
+                [attr.aria-label]="'Supprimer la langue ' + ($index + 1)"
+                (click)="onRemoveLanguage($index)"
+              >
+                <mat-icon aria-hidden="true">delete</mat-icon>
+              </button>
+            </div>
+          }
+          <button type="button" mat-stroked-button class="min-h-11 w-full sm:w-auto" (click)="onAddLanguage()">
+            <mat-icon aria-hidden="true">add</mat-icon>
+            Ajouter une langue
+          </button>
+        </div>
+      </mat-card>
+
+      <mat-card class="flex flex-col gap-4 p-4 sm:p-6">
+        <h2 class="text-lg font-medium">Opportunités recherchées</h2>
+
+        <div formArrayName="opportunityTypes" class="flex flex-col gap-1">
+          @for (option of opportunityTypeOptions; track option.value) {
+            <mat-checkbox [id]="'opportunity-type-checkbox-' + $index" [formControlName]="$index" class="min-h-11">
+              {{ option.label }}
+            </mat-checkbox>
+          }
+          @if (submitAttempted() && form.controls.opportunityTypes.invalid) {
+            <p role="alert" aria-live="polite" class="text-sm text-red-700">
+              Sélectionne au moins un type d'opportunité.
+            </p>
+          }
+        </div>
+      </mat-card>
+
+      <mat-card class="flex flex-col gap-4 p-4 sm:p-6">
+        <h2 class="text-lg font-medium">Disponibilités</h2>
+
+        <div formArrayName="availabilitySlots" class="flex flex-col gap-3">
+          @for (slot of form.controls.availabilitySlots.controls; track $index) {
+            <div [formGroupName]="$index" class="flex flex-col gap-2 rounded-md border border-gray-200 p-3">
+              <div class="flex flex-col gap-2 sm:flex-row">
+                <mat-form-field appearance="outline" class="w-full sm:flex-1">
+                  <mat-label>Jour</mat-label>
+                  <mat-select [id]="'availability-day-select-' + $index" formControlName="dayOfWeek">
+                    @for (option of dayOfWeekOptions; track option.value) {
+                      <mat-option [value]="option.value">{{ option.label }}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+                <input
+                  [attr.id]="'availability-start-input-' + $index"
+                  type="time"
+                  formControlName="startTime"
+                  aria-label="Heure de début"
+                  class="min-h-11 w-full rounded-md border border-gray-300 px-2 text-sm sm:flex-1"
+                />
+                <input
+                  [attr.id]="'availability-end-input-' + $index"
+                  type="time"
+                  formControlName="endTime"
+                  aria-label="Heure de fin"
+                  class="min-h-11 w-full rounded-md border border-gray-300 px-2 text-sm sm:flex-1"
+                />
+              </div>
+              @if (submitAttempted() && slot.hasError('startNotBeforeEnd')) {
+                <p role="alert" aria-live="polite" class="text-sm text-red-700">
+                  L'heure de début doit être avant l'heure de fin.
+                </p>
+              }
+              <button
+                type="button"
+                mat-stroked-button
+                color="warn"
+                class="min-h-11 self-start"
+                (click)="onRemoveAvailabilitySlot($index)"
+              >
+                Supprimer ce créneau
+              </button>
+            </div>
+          }
+          <button
+            type="button"
+            mat-stroked-button
+            class="min-h-11 w-full sm:w-auto"
+            (click)="onAddAvailabilitySlot()"
+          >
+            <mat-icon aria-hidden="true">add</mat-icon>
+            Ajouter un créneau
+          </button>
+        </div>
+      </mat-card>
+
+      <mat-card class="flex flex-col gap-4 p-4 sm:p-6">
+        <h2 class="text-lg font-medium">Informations sensibles (optionnel)</h2>
+        <p class="text-sm text-gray-600">
+          Ta situation de logement, tes éventuelles aptitudes/handicap et tes allergies ne sont
+          utilisées que par l'équipe de modération — pour t'orienter vers des missions
+          adaptées ou faciliter une prise en charge si besoin. Elles ne sont jamais transmises
+          aux recruteurs. Tu peux choisir de ne pas les renseigner.
+        </p>
+
+        <mat-checkbox id="sensitive-consent-checkbox" formControlName="sensitiveDataConsent" class="min-h-11">
+          J'accepte de renseigner ces informations sensibles
+        </mat-checkbox>
+
+        @if (form.controls.sensitiveDataConsent.value) {
+          <div class="flex flex-col gap-4">
+            <mat-form-field appearance="outline" class="w-full">
+              <mat-label>Situation de logement</mat-label>
+              <mat-select id="housing-situation-select" formControlName="housingSituation">
+                @for (option of housingSituationOptions; track option.value) {
+                  <mat-option [value]="option.value">{{ option.label }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+
+            <mat-checkbox id="has-disability-checkbox" formControlName="hasDisability" class="min-h-11">
+              J'ai une aptitude particulière ou un handicap à signaler
+            </mat-checkbox>
+
+            @if (form.controls.hasDisability.value) {
+              <mat-form-field appearance="outline" class="w-full">
+                <mat-label>Précision (optionnel)</mat-label>
+                <textarea
+                  id="disability-description-textarea"
+                  matInput
+                  formControlName="disabilityDescription"
+                  rows="3"
+                  maxlength="500"
+                ></textarea>
+                @if (submitAttempted() && form.controls.disabilityDescription.invalid) {
+                  <mat-error>{{ errorFor(form.controls.disabilityDescription, 'La précision') }}</mat-error>
+                }
+              </mat-form-field>
+            }
+
+            <mat-form-field appearance="outline" class="w-full">
+              <mat-label>Allergies (optionnel)</mat-label>
+              <textarea id="allergies-textarea" matInput formControlName="allergies" rows="3" maxlength="500"></textarea>
+              @if (submitAttempted() && form.controls.allergies.invalid) {
+                <mat-error>{{ errorFor(form.controls.allergies, 'Les allergies') }}</mat-error>
+              }
+            </mat-form-field>
+          </div>
+        }
+      </mat-card>
+
+      @if (submitErrorMessage(); as message) {
+        <p
+          role="alert"
+          aria-live="polite"
+          class="flex min-h-11 items-center gap-2 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700"
+        >
+          <mat-icon aria-hidden="true" class="!h-5 !w-5 !text-[20px] !leading-5">error</mat-icon>
+          <span>{{ message }}</span>
+        </p>
+      }
+
+      @if (upsertMutation.isSuccess()) {
+        <p
+          role="status"
+          aria-live="polite"
+          class="flex min-h-11 items-center gap-2 rounded-md bg-green-50 px-3 py-2 text-sm text-green-700"
+        >
+          <mat-icon aria-hidden="true" class="!h-5 !w-5 !text-[20px] !leading-5">check_circle</mat-icon>
+          <span>Ton profil a été enregistré.</span>
+        </p>
+      }
+
+      <button
+        id="submit-button"
+        mat-flat-button
+        color="primary"
+        type="submit"
+        class="flex min-h-11 w-full items-center justify-center gap-2"
+        [disabled]="upsertMutation.isPending()"
+      >
+        @if (upsertMutation.isPending()) {
+          <mat-spinner diameter="20" aria-hidden="true" />
+        }
+        <span>{{ upsertMutation.isPending() ? 'Enregistrement en cours…' : 'Enregistrer mon profil' }}</span>
+      </button>
+    </form>
+  }
+</section>
