@@ -1,0 +1,172 @@
+<section class="mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 py-6 sm:px-6">
+  <div class="flex items-center justify-between gap-2">
+    <h1 class="text-2xl font-semibold sm:text-3xl">Candidats</h1>
+    <button id="back-button" mat-stroked-button type="button" class="min-h-11" (click)="onBack()">
+      Retour
+    </button>
+  </div>
+  <p class="text-sm text-gray-600 sm:text-base">
+    Fiches anonymes des candidats transmis par l'équipe de modération pour cette offre.
+  </p>
+
+  <mat-button-toggle-group
+    class="flex w-full flex-wrap"
+    [value]="status()"
+    (change)="onStatusChange($event)"
+    aria-label="Filtrer par statut"
+  >
+    @for (option of statusFilterOptions; track option.value) {
+      <mat-button-toggle [value]="option.value" class="min-h-11 flex-1">
+        {{ option.label }}
+      </mat-button-toggle>
+    }
+  </mat-button-toggle-group>
+
+  @if (selectErrorMessage(); as message) {
+    <p role="alert" aria-live="polite" class="text-sm text-red-700">{{ message }}</p>
+  }
+
+  @if (candidatesQuery.isPending()) {
+    <div class="flex items-center justify-center gap-2 py-10 text-sm text-gray-600">
+      <mat-spinner diameter="24" aria-hidden="true" />
+      <span>Chargement des candidats…</span>
+    </div>
+  } @else if (errorMessage(); as message) {
+    <p role="alert" aria-live="polite" class="text-sm text-red-700">{{ message }}</p>
+  } @else if (candidatesQuery.data(); as page) {
+    @if (page.items.length === 0) {
+      <p class="text-sm text-gray-600">Aucun candidat pour ce filtre.</p>
+    } @else {
+      <ul class="flex flex-col gap-3">
+        @for (candidate of page.items; track candidate.applicationId) {
+          <li>
+            <mat-card class="flex flex-col gap-3 p-4">
+              <div class="flex flex-wrap items-center justify-between gap-2">
+                <span class="text-sm font-medium">{{ candidate.university }}</span>
+                <app-candidate-status-badge [status]="candidate.status" />
+              </div>
+              <dl class="grid grid-cols-1 gap-1 text-sm text-gray-600 sm:grid-cols-2">
+                <div>
+                  <dt class="inline font-medium text-gray-700">Filière :</dt>
+                  <dd class="inline">{{ candidate.fieldOfStudy }}</dd>
+                </div>
+                <div>
+                  <dt class="inline font-medium text-gray-700">Niveau :</dt>
+                  <dd class="inline">{{ candidate.studyLevel }}</dd>
+                </div>
+                <div>
+                  <dt class="inline font-medium text-gray-700">Zone de résidence :</dt>
+                  <dd class="inline">{{ candidate.residenceArea }}</dd>
+                </div>
+              </dl>
+
+              @if (candidate.skills.length > 0) {
+                <p class="text-sm text-gray-600">
+                  <span class="font-medium text-gray-700">Compétences :</span>
+                  {{ candidate.skills.join(', ') }}
+                </p>
+              }
+              @if (candidate.languages.length > 0) {
+                <p class="text-sm text-gray-600">
+                  <span class="font-medium text-gray-700">Langues :</span>
+                  {{ candidate.languages.join(', ') }}
+                </p>
+              }
+              @if (candidate.experiences; as experiences) {
+                <p class="text-sm text-gray-600">
+                  <span class="font-medium text-gray-700">Expériences :</span> {{ experiences }}
+                </p>
+              }
+              @if (candidate.opportunityTypes.length > 0) {
+                <p class="text-sm text-gray-600">
+                  <span class="font-medium text-gray-700">Recherche :</span>
+                  @for (type of candidate.opportunityTypes; track type; let last = $last) {
+                    {{ opportunityTypeLabel(type) }}{{ last ? '' : ', ' }}
+                  }
+                </p>
+              }
+              @if (candidate.availabilitySlots.length > 0) {
+                <p class="text-sm text-gray-600">
+                  <span class="font-medium text-gray-700">Disponibilités :</span>
+                  @for (slot of candidate.availabilitySlots; track $index; let last = $last) {
+                    {{ dayOfWeekLabel(slot.dayOfWeek) }} {{ slot.startTime }}-{{ slot.endTime }}{{
+                      last ? '' : ', '
+                    }}
+                  }
+                </p>
+              }
+
+              <div class="flex flex-col gap-2">
+                @if (candidate.status === 'forwarded') {
+                  <button
+                    class="select-candidate-button min-h-11"
+                    mat-flat-button
+                    color="primary"
+                    type="button"
+                    [disabled]="selectMutation.isPending()"
+                    (click)="onSelect(candidate.applicationId)"
+                  >
+                    {{ selectMutation.isPending() ? 'Sélection…' : 'Sélectionner ce candidat' }}
+                  </button>
+                }
+
+                @if (candidate.status === 'accepted') {
+                  @if (!isContactRequested(candidate.applicationId)) {
+                    <button
+                      class="show-contact-button min-h-11"
+                      mat-stroked-button
+                      type="button"
+                      (click)="onRequestContact(candidate.applicationId)"
+                    >
+                      Voir les coordonnées
+                    </button>
+                  } @else {
+                    @if (contactQuery.isPending()) {
+                      <div class="flex items-center gap-2 text-sm text-gray-600">
+                        <mat-spinner diameter="18" aria-hidden="true" />
+                        <span>Chargement des coordonnées…</span>
+                      </div>
+                    } @else if (contactErrorMessage(); as message) {
+                      <p role="alert" aria-live="polite" class="text-sm text-red-700">{{ message }}</p>
+                    } @else if (contactQuery.data(); as contact) {
+                      <div class="candidate-contact rounded-md bg-green-50 p-3 text-sm text-green-800">
+                        <p><span class="font-medium">Nom :</span> {{ contact.firstName }} {{ contact.lastName }}</p>
+                        @if (contact.phoneNumber; as phoneNumber) {
+                          <p><span class="font-medium">Téléphone :</span> {{ phoneNumber }}</p>
+                        }
+                      </div>
+                    }
+                  }
+                }
+              </div>
+            </mat-card>
+          </li>
+        }
+      </ul>
+
+      <div class="flex items-center justify-between gap-3 pt-2">
+        <button
+          id="previous-page-button"
+          mat-stroked-button
+          type="button"
+          class="min-h-11"
+          [disabled]="!canGoPrevious()"
+          (click)="onPreviousPage()"
+        >
+          Précédent
+        </button>
+        <span class="text-sm text-gray-600">Page {{ page.page }}</span>
+        <button
+          id="next-page-button"
+          mat-stroked-button
+          type="button"
+          class="min-h-11"
+          [disabled]="!canGoNext()"
+          (click)="onNextPage()"
+        >
+          Suivant
+        </button>
+      </div>
+    }
+  }
+</section>

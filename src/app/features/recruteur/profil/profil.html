@@ -1,0 +1,168 @@
+<section class="mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 py-6 sm:px-6">
+  <div class="flex flex-col gap-2">
+    <h1 class="text-2xl font-semibold sm:text-3xl">Mon profil recruteur</h1>
+    <p class="text-sm text-gray-600 sm:text-base">
+      Renseigne le profil de ta structure pour pouvoir publier des offres et recevoir des
+      candidatures validées par l'équipe de modération.
+    </p>
+  </div>
+
+  @if (profileQuery.isPending()) {
+    <div class="flex items-center justify-center gap-2 py-10 text-sm text-gray-600">
+      <mat-spinner diameter="24" aria-hidden="true" />
+      <span>Chargement de ton profil…</span>
+    </div>
+  } @else if (profileLoadErrorMessage(); as message) {
+    <p role="alert" aria-live="polite" class="text-sm text-red-700">{{ message }}</p>
+  } @else {
+    <form
+      [formGroup]="form"
+      (ngSubmit)="onSubmit()"
+      novalidate
+      class="flex flex-col gap-6"
+      aria-label="Formulaire de profil recruteur"
+    >
+      <mat-card class="flex flex-col gap-4 p-4 sm:p-6">
+        <h2 class="text-lg font-medium">Structure</h2>
+
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Nom de la structure</mat-label>
+          <input
+            id="structure-name-input"
+            matInput
+            formControlName="structureName"
+            required
+            maxlength="200"
+          />
+          @if (submitAttempted() && form.controls.structureName.invalid) {
+            <mat-error>{{ errorFor(form.controls.structureName, 'Le nom de la structure') }}</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Type de structure</mat-label>
+          <mat-select id="structure-type-select" formControlName="structureType" required>
+            @for (option of structureTypeOptions; track option.value) {
+              <mat-option [value]="option.value">{{ option.label }}</mat-option>
+            }
+          </mat-select>
+          @if (submitAttempted() && form.controls.structureType.invalid) {
+            <mat-error>Le type de structure est requis.</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Localisation</mat-label>
+          <input
+            id="location-input"
+            matInput
+            formControlName="location"
+            required
+            maxlength="200"
+            placeholder="Ex. Lomé, Agoè"
+          />
+          @if (submitAttempted() && form.controls.location.invalid) {
+            <mat-error>{{ errorFor(form.controls.location, 'La localisation') }}</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Description (optionnel)</mat-label>
+          <textarea
+            id="description-textarea"
+            matInput
+            formControlName="description"
+            rows="4"
+            maxlength="2000"
+          ></textarea>
+          @if (submitAttempted() && form.controls.description.invalid) {
+            <mat-error>{{ errorFor(form.controls.description, 'La description') }}</mat-error>
+          }
+        </mat-form-field>
+      </mat-card>
+
+      <mat-card class="flex flex-col gap-4 p-4 sm:p-6">
+        <h2 class="text-lg font-medium">Contact</h2>
+
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Prénom du contact</mat-label>
+          <input
+            id="contact-first-name-input"
+            matInput
+            formControlName="contactFirstName"
+            required
+            maxlength="100"
+          />
+          @if (submitAttempted() && form.controls.contactFirstName.invalid) {
+            <mat-error>{{ errorFor(form.controls.contactFirstName, 'Le prénom du contact') }}</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Nom du contact</mat-label>
+          <input
+            id="contact-last-name-input"
+            matInput
+            formControlName="contactLastName"
+            required
+            maxlength="100"
+          />
+          @if (submitAttempted() && form.controls.contactLastName.invalid) {
+            <mat-error>{{ errorFor(form.controls.contactLastName, 'Le nom du contact') }}</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="w-full">
+          <mat-label>Téléphone</mat-label>
+          <input
+            id="phone-number-input"
+            matInput
+            formControlName="phoneNumber"
+            type="tel"
+            required
+            maxlength="30"
+          />
+          @if (submitAttempted() && form.controls.phoneNumber.invalid) {
+            <mat-error>{{ errorFor(form.controls.phoneNumber, 'Le téléphone') }}</mat-error>
+          }
+        </mat-form-field>
+      </mat-card>
+
+      @if (submitErrorMessage(); as message) {
+        <p
+          role="alert"
+          aria-live="polite"
+          class="flex min-h-11 items-center gap-2 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700"
+        >
+          <mat-icon aria-hidden="true" class="!h-5 !w-5 !text-[20px] !leading-5">error</mat-icon>
+          <span>{{ message }}</span>
+        </p>
+      }
+
+      @if (upsertMutation.isSuccess()) {
+        <p
+          role="status"
+          aria-live="polite"
+          class="flex min-h-11 items-center gap-2 rounded-md bg-green-50 px-3 py-2 text-sm text-green-700"
+        >
+          <mat-icon aria-hidden="true" class="!h-5 !w-5 !text-[20px] !leading-5">check_circle</mat-icon>
+          <span>Ton profil recruteur a été enregistré.</span>
+        </p>
+      }
+
+      <button
+        id="submit-button"
+        mat-flat-button
+        color="primary"
+        type="submit"
+        class="flex min-h-11 w-full items-center justify-center gap-2"
+        [disabled]="upsertMutation.isPending()"
+      >
+        @if (upsertMutation.isPending()) {
+          <mat-spinner diameter="20" aria-hidden="true" />
+        }
+        <span>{{ upsertMutation.isPending() ? 'Enregistrement en cours…' : 'Enregistrer mon profil' }}</span>
+      </button>
+    </form>
+  }
+</section>

@@ -1,0 +1,220 @@
+<section class="mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 py-6 sm:px-6">
+  <div class="flex items-center justify-between gap-2">
+    <h1 class="text-2xl font-semibold sm:text-3xl">Détail de l'offre</h1>
+    <button id="back-button" mat-stroked-button type="button" class="min-h-11" (click)="onBack()">
+      Retour
+    </button>
+  </div>
+
+  @if (detailQuery.isPending()) {
+    <div class="flex items-center justify-center gap-2 py-10 text-sm text-gray-600">
+      <mat-spinner diameter="24" aria-hidden="true" />
+      <span>Chargement de l'offre…</span>
+    </div>
+  } @else if (detailErrorMessage(); as message) {
+    <p role="alert" aria-live="polite" class="text-sm text-red-700">{{ message }}</p>
+  } @else if (detailQuery.data(); as offer) {
+    <mat-card class="flex flex-col gap-3 p-4 sm:p-6">
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <span class="min-w-0 truncate text-lg font-medium">{{ offer.title }}</span>
+        <app-offer-status-badge [status]="offer.status" />
+      </div>
+      <p class="whitespace-pre-line text-sm text-gray-700">{{ offer.description }}</p>
+      <dl class="grid grid-cols-1 gap-1 text-sm text-gray-600 sm:grid-cols-2">
+        <div>
+          <dt class="inline font-medium text-gray-700">Type :</dt>
+          <dd class="inline">{{ opportunityTypeLabel(offer.opportunityType) }}</dd>
+        </div>
+        <div>
+          <dt class="inline font-medium text-gray-700">Lieu :</dt>
+          <dd class="inline">{{ offer.location }}</dd>
+        </div>
+        <div>
+          <dt class="inline font-medium text-gray-700">Durée :</dt>
+          <dd class="inline">{{ offer.durationLabel }}</dd>
+        </div>
+        <div>
+          <dt class="inline font-medium text-gray-700">Rémunération :</dt>
+          <dd class="inline">{{ offer.compensationLabel }}</dd>
+        </div>
+        <div>
+          <dt class="inline font-medium text-gray-700">Candidats transmis :</dt>
+          <dd class="inline">{{ offer.forwardedCandidatesCount }}</dd>
+        </div>
+        @if (offer.publishedAt; as publishedAt) {
+          <div>
+            <dt class="inline font-medium text-gray-700">Publiée le :</dt>
+            <dd class="inline">{{ publishedAt | date: 'dd/MM/yyyy' : 'UTC' }}</dd>
+          </div>
+        }
+      </dl>
+    </mat-card>
+
+    <mat-card class="flex flex-col gap-4 p-4 sm:p-6">
+      <h2 class="text-lg font-medium">Actions</h2>
+
+      <div class="flex flex-col gap-3 sm:flex-row">
+        @if (offer.status === 'draft') {
+          <button
+            id="edit-button"
+            mat-stroked-button
+            type="button"
+            class="min-h-11 flex-1"
+            [disabled]="updateMutation.isPending()"
+            (click)="onEdit()"
+          >
+            Éditer
+          </button>
+          <button
+            id="publish-button"
+            mat-flat-button
+            color="primary"
+            type="button"
+            class="min-h-11 flex-1"
+            [disabled]="publishMutation.isPending()"
+            (click)="onPublish()"
+          >
+            {{ publishMutation.isPending() ? 'Publication…' : "Publier l'offre" }}
+          </button>
+        }
+        @if (offer.status === 'published') {
+          <button
+            id="close-button"
+            mat-stroked-button
+            color="warn"
+            type="button"
+            class="min-h-11 flex-1"
+            [disabled]="closeMutation.isPending()"
+            (click)="onClose()"
+          >
+            {{ closeMutation.isPending() ? 'Fermeture…' : "Fermer l'offre" }}
+          </button>
+        }
+        <a
+          id="candidates-link"
+          [routerLink]="['/recruteur', 'offres', offer.id, 'candidats']"
+          mat-stroked-button
+          class="flex min-h-11 flex-1 items-center justify-center"
+        >
+          Voir les candidats
+        </a>
+      </div>
+
+      @if (publishErrorMessage(); as message) {
+        <p role="alert" aria-live="polite" class="text-sm text-red-700">{{ message }}</p>
+      }
+      @if (closeErrorMessage(); as message) {
+        <p role="alert" aria-live="polite" class="text-sm text-red-700">{{ message }}</p>
+      }
+    </mat-card>
+
+    @if (showEditForm()) {
+      <mat-card class="flex flex-col gap-4 p-4 sm:p-6">
+        <h2 class="text-lg font-medium">Éditer l'offre</h2>
+
+        <form
+          [formGroup]="editForm"
+          (ngSubmit)="onSubmitEdit()"
+          novalidate
+          class="flex flex-col gap-4"
+          aria-label="Formulaire d'édition de l'offre"
+        >
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Titre</mat-label>
+            <input id="edit-title-input" matInput formControlName="title" required maxlength="200" />
+            @if (editForm.controls.title.invalid && editForm.controls.title.touched) {
+              <mat-error>{{ errorFor(editForm.controls.title, 'Le titre') }}</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Description</mat-label>
+            <textarea
+              id="edit-description-textarea"
+              matInput
+              formControlName="description"
+              rows="5"
+              required
+              maxlength="5000"
+            ></textarea>
+            @if (editForm.controls.description.invalid && editForm.controls.description.touched) {
+              <mat-error>{{ errorFor(editForm.controls.description, 'La description') }}</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Type d'opportunité</mat-label>
+            <mat-select id="edit-opportunity-type-select" formControlName="opportunityType" required>
+              @for (option of opportunityTypeOptions; track option.value) {
+                <mat-option [value]="option.value">{{ option.label }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Lieu</mat-label>
+            <input id="edit-location-input" matInput formControlName="location" required maxlength="200" />
+            @if (editForm.controls.location.invalid && editForm.controls.location.touched) {
+              <mat-error>{{ errorFor(editForm.controls.location, 'Le lieu') }}</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Durée</mat-label>
+            <input
+              id="edit-duration-label-input"
+              matInput
+              formControlName="durationLabel"
+              required
+              maxlength="100"
+            />
+            @if (editForm.controls.durationLabel.invalid && editForm.controls.durationLabel.touched) {
+              <mat-error>{{ errorFor(editForm.controls.durationLabel, 'La durée') }}</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Rémunération / indemnité</mat-label>
+            <input
+              id="edit-compensation-label-input"
+              matInput
+              formControlName="compensationLabel"
+              required
+              maxlength="200"
+            />
+            @if (editForm.controls.compensationLabel.invalid && editForm.controls.compensationLabel.touched) {
+              <mat-error>{{ errorFor(editForm.controls.compensationLabel, 'La rémunération') }}</mat-error>
+            }
+          </mat-form-field>
+
+          @if (updateErrorMessage(); as message) {
+            <p role="alert" aria-live="polite" class="text-sm text-red-700">{{ message }}</p>
+          }
+
+          <div class="flex flex-col gap-3 sm:flex-row">
+            <button
+              id="confirm-edit-button"
+              mat-flat-button
+              color="primary"
+              type="submit"
+              class="min-h-11 flex-1"
+              [disabled]="updateMutation.isPending()"
+            >
+              {{ updateMutation.isPending() ? 'Enregistrement…' : 'Enregistrer' }}
+            </button>
+            <button
+              id="cancel-edit-button"
+              mat-stroked-button
+              type="button"
+              class="min-h-11 flex-1"
+              [disabled]="updateMutation.isPending()"
+              (click)="onCancelEdit()"
+            >
+              Annuler
+            </button>
+          </div>
+        </form>
+      </mat-card>
+    }
+  }
+</section>

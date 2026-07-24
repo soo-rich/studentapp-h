@@ -1,0 +1,130 @@
+<section class="mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 py-6 sm:px-6">
+  <div class="flex flex-col gap-2">
+    <h1 class="text-2xl font-semibold sm:text-3xl">Nouvelle offre</h1>
+    <p class="text-sm text-gray-600 sm:text-base">
+      L'offre sera créée en brouillon. Tu pourras la publier une fois prête.
+    </p>
+  </div>
+
+  <form
+    [formGroup]="form"
+    (ngSubmit)="onSubmit()"
+    novalidate
+    class="flex flex-col gap-6"
+    aria-label="Formulaire de nouvelle offre"
+  >
+    <mat-card class="flex flex-col gap-4 p-4 sm:p-6">
+      <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Titre</mat-label>
+        <input id="title-input" matInput formControlName="title" required maxlength="200" />
+        @if (submitAttempted() && form.controls.title.invalid) {
+          <mat-error>{{ errorFor(form.controls.title, 'Le titre') }}</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Description</mat-label>
+        <textarea
+          id="description-textarea"
+          matInput
+          formControlName="description"
+          rows="5"
+          required
+          maxlength="5000"
+        ></textarea>
+        @if (submitAttempted() && form.controls.description.invalid) {
+          <mat-error>{{ errorFor(form.controls.description, 'La description') }}</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Type d'opportunité</mat-label>
+        <mat-select id="opportunity-type-select" formControlName="opportunityType" required>
+          @for (option of opportunityTypeOptions; track option.value) {
+            <mat-option [value]="option.value">{{ option.label }}</mat-option>
+          }
+        </mat-select>
+        @if (submitAttempted() && form.controls.opportunityType.invalid) {
+          <mat-error>Le type d'opportunité est requis.</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Lieu</mat-label>
+        <input
+          id="location-input"
+          matInput
+          formControlName="location"
+          required
+          maxlength="200"
+          placeholder="Ex. Lomé, Agoè"
+        />
+        @if (submitAttempted() && form.controls.location.invalid) {
+          <mat-error>{{ errorFor(form.controls.location, 'Le lieu') }}</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Durée</mat-label>
+        <input
+          id="duration-label-input"
+          matInput
+          formControlName="durationLabel"
+          required
+          maxlength="100"
+          placeholder="Ex. 2 semaines, 3 mois…"
+        />
+        @if (submitAttempted() && form.controls.durationLabel.invalid) {
+          <mat-error>{{ errorFor(form.controls.durationLabel, 'La durée') }}</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="w-full">
+        <mat-label>Rémunération / indemnité</mat-label>
+        <input
+          id="compensation-label-input"
+          matInput
+          formControlName="compensationLabel"
+          required
+          maxlength="200"
+          placeholder="Ex. 5000 FCFA/jour"
+        />
+        @if (submitAttempted() && form.controls.compensationLabel.invalid) {
+          <mat-error>{{ errorFor(form.controls.compensationLabel, 'La rémunération') }}</mat-error>
+        }
+      </mat-form-field>
+    </mat-card>
+
+    @if (submitErrorMessage(); as message) {
+      <div
+        role="alert"
+        aria-live="polite"
+        class="flex flex-col gap-2 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700"
+      >
+        <div class="flex min-h-11 items-center gap-2">
+          <mat-icon aria-hidden="true" class="!h-5 !w-5 !text-[20px] !leading-5">error</mat-icon>
+          <span>{{ message }}</span>
+        </div>
+        @if (requiresRecruiterProfile()) {
+          <a routerLink="/recruteur/profil" class="flex min-h-11 w-fit items-center underline">
+            Compléter mon profil recruteur
+          </a>
+        }
+      </div>
+    }
+
+    <button
+      id="submit-button"
+      mat-flat-button
+      color="primary"
+      type="submit"
+      class="flex min-h-11 w-full items-center justify-center gap-2"
+      [disabled]="createMutation.isPending()"
+    >
+      @if (createMutation.isPending()) {
+        <mat-spinner diameter="20" aria-hidden="true" />
+      }
+      <span>{{ createMutation.isPending() ? 'Création en cours…' : "Créer l'offre" }}</span>
+    </button>
+  </form>
+</section>

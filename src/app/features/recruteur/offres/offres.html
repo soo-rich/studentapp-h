@@ -1,0 +1,91 @@
+<section class="mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 py-6 sm:px-6">
+  <div class="flex flex-col gap-2">
+    <div class="flex items-center justify-between gap-2">
+      <h1 class="text-2xl font-semibold sm:text-3xl">Mes offres</h1>
+      <a
+        id="new-offer-link"
+        routerLink="/recruteur/offres/nouvelle"
+        mat-flat-button
+        color="primary"
+        class="flex min-h-11 items-center"
+      >
+        Nouvelle offre
+      </a>
+    </div>
+    <p class="text-sm text-gray-600 sm:text-base">
+      Gère tes offres, publie-les pour les rendre visibles des étudiants, puis consulte les
+      candidats transmis par l'équipe de modération.
+    </p>
+  </div>
+
+  <mat-button-toggle-group
+    class="flex w-full flex-wrap"
+    [value]="status()"
+    (change)="onStatusChange($event)"
+    aria-label="Filtrer par statut"
+  >
+    @for (option of statusFilterOptions; track option.value) {
+      <mat-button-toggle [value]="option.value" class="min-h-11 flex-1">
+        {{ option.label }}
+      </mat-button-toggle>
+    }
+  </mat-button-toggle-group>
+
+  @if (offersQuery.isPending()) {
+    <div class="flex items-center justify-center gap-2 py-10 text-sm text-gray-600">
+      <mat-spinner diameter="24" aria-hidden="true" />
+      <span>Chargement de tes offres…</span>
+    </div>
+  } @else if (errorMessage(); as message) {
+    <p role="alert" aria-live="polite" class="text-sm text-red-700">{{ message }}</p>
+  } @else if (offersQuery.data(); as page) {
+    @if (page.items.length === 0) {
+      <p class="text-sm text-gray-600">Aucune offre pour ce filtre.</p>
+    } @else {
+      <ul class="flex flex-col gap-3">
+        @for (offer of page.items; track offer.id) {
+          <li>
+            <a
+              [routerLink]="['/recruteur', 'offres', offer.id]"
+              class="flex min-h-11 flex-col gap-2 rounded-md border border-gray-200 p-4 hover:bg-gray-50"
+            >
+              <div class="flex items-center justify-between gap-2">
+                <span class="min-w-0 truncate text-sm font-medium">{{ offer.title }}</span>
+                <app-offer-status-badge [status]="offer.status" />
+              </div>
+              <div class="flex flex-wrap items-center gap-2 text-xs text-gray-600">
+                <span>{{ opportunityTypeLabel(offer.opportunityType) }}</span>
+                <span aria-hidden="true">·</span>
+                <span>{{ offer.forwardedCandidatesCount }} candidat(s) transmis</span>
+              </div>
+            </a>
+          </li>
+        }
+      </ul>
+
+      <div class="flex items-center justify-between gap-3 pt-2">
+        <button
+          id="previous-page-button"
+          mat-stroked-button
+          type="button"
+          class="min-h-11"
+          [disabled]="!canGoPrevious()"
+          (click)="onPreviousPage()"
+        >
+          Précédent
+        </button>
+        <span class="text-sm text-gray-600">Page {{ page.page }}</span>
+        <button
+          id="next-page-button"
+          mat-stroked-button
+          type="button"
+          class="min-h-11"
+          [disabled]="!canGoNext()"
+          (click)="onNextPage()"
+        >
+          Suivant
+        </button>
+      </div>
+    }
+  }
+</section>

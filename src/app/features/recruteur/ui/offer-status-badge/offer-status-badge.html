@@ -1,0 +1,9 @@
+<span
+  class="inline-flex w-fit max-w-full items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium"
+  [class]="toneClasses()"
+  role="status"
+  [attr.aria-label]="label()"
+>
+  <mat-icon aria-hidden="true" class="!h-4 !w-4 !text-[16px] !leading-4">{{ icon() }}</mat-icon>
+  <span>{{ label() }}</span>
+</span>
