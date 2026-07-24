@@ -9,6 +9,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 import { Role } from '../../../core/auth/role';
+import { GENERIC_ERROR_MESSAGE } from '../../../core/http/api-error';
 import {
   injectReviewUrgentRequestMutation,
   injectUrgentQueueQuery,
@@ -62,12 +63,6 @@ const ROLE_LABELS: Record<Role, string> = {
   recruteur: 'Recruteur',
   moderateur: 'Modérateur',
 };
-
-/**
- * Message d'erreur générique affiché en cas d'échec du chargement de la file — même choix que
- * `moderation/queue` (pas de parsing du corps de l'erreur pour un simple écran de liste).
- */
-const GENERIC_ERROR_MESSAGE = 'Une erreur est survenue. Réessaie dans un instant.';
 
 /**
  * Message dédié au 409 `URGENT_REQUEST_INVALID_STATE` (brief T15, point 4) : un autre
@@ -157,7 +152,11 @@ export class UrgentQueue {
   /** Mutation TanStack `POST /moderation/urgent-requests/{id}/review` (couche data amont). */
   protected readonly reviewMutation = injectReviewUrgentRequestMutation();
 
-  /** Message d'erreur générique du chargement de la file, `null` tant qu'aucune tentative n'a échoué. */
+  /**
+   * Message d'erreur générique (`core/http/api-error`) du chargement de la file, `null` tant
+   * qu'aucune tentative n'a échoué — même choix que `moderation/queue` (pas de parsing du corps
+   * de l'erreur pour un simple écran de liste).
+   */
   protected readonly loadErrorMessage = computed<string | null>(() =>
     this.queueQuery.error() === null ? null : GENERIC_ERROR_MESSAGE,
   );

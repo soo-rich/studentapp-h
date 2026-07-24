@@ -6,6 +6,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { RouterLink } from '@angular/router';
 
 import { Role } from '../../../core/auth/role';
+import { GENERIC_ERROR_MESSAGE } from '../../../core/http/api-error';
 import { VerificationBadge } from '../../../shared/verification-badge/verification-badge';
 import { injectModerationQueueQuery } from '../data/moderation.queries';
 import { VerificationStatus } from '../data/moderation.types';
@@ -32,13 +33,6 @@ const ROLE_LABELS: Record<Role, string> = {
   recruteur: 'Recruteur',
   moderateur: 'Modérateur',
 };
-
-/**
- * Message d'erreur générique affiché en cas d'échec du chargement de la file — pas de
- * parsing du corps de l'erreur ici (contrairement à l'écran détail) : un simple message
- * générique suffit pour cet écran de liste, voir brief T4 ("erreur : message générique").
- */
-const GENERIC_ERROR_MESSAGE = 'Une erreur est survenue. Réessaie dans un instant.';
 
 /**
  * File de vérification (back-office modération, T4/Épic 1) : liste paginée des demandes
@@ -79,7 +73,12 @@ export class ModerationQueue {
     pageSize: PAGE_SIZE,
   }));
 
-  /** Message d'erreur générique, `null` tant qu'aucune tentative n'a échoué. */
+  /**
+   * Message d'erreur générique (`core/http/api-error`), `null` tant qu'aucune tentative n'a
+   * échoué — pas de parsing du corps de l'erreur ici (contrairement à l'écran détail) : un
+   * simple message générique suffit pour cet écran de liste, voir brief T4 ("erreur : message
+   * générique").
+   */
   protected readonly errorMessage = computed<string | null>(() =>
     this.queueQuery.error() === null ? null : GENERIC_ERROR_MESSAGE,
   );
