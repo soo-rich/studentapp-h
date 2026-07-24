@@ -1,0 +1,119 @@
+<section class="mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 py-6 sm:px-6">
+  <div class="flex flex-col gap-2">
+    <h1 class="text-2xl font-semibold sm:text-3xl">Besoin d'aide en urgence</h1>
+    <p class="text-sm text-gray-600 sm:text-base">
+      Si tu traverses une situation difficile, tu peux nous en parler. Ce message est privé : seule
+      l'équipe de modération le lit, jamais un recruteur.
+    </p>
+  </div>
+
+  @if (urgentRequestQuery.isPending()) {
+    <div class="flex items-center justify-center gap-2 py-10 text-sm text-gray-600">
+      <mat-spinner diameter="24" aria-hidden="true" />
+      <span>Chargement…</span>
+    </div>
+  } @else if (queryErrorMessage(); as message) {
+    <p role="alert" aria-live="polite" class="text-sm text-red-700">{{ message }}</p>
+  } @else {
+    @if (latestRequest(); as request) {
+      <mat-card class="flex flex-col gap-3 p-4 sm:p-6">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <h2 class="text-lg font-medium">Ta dernière demande</h2>
+          <span
+            class="rounded-full px-3 py-1 text-xs font-medium {{
+              statusBadgeClasses(request.status)
+            }}"
+          >
+            {{ statusLabel(request.status) }}
+          </span>
+        </div>
+
+        <p class="whitespace-pre-wrap text-sm text-gray-700">{{ request.message }}</p>
+        <p class="text-xs text-gray-500">Envoyée le {{ formatDate(request.createdAt) }}</p>
+
+        @if (request.status === 'pending') {
+          <p class="text-sm text-gray-600">
+            Ta demande est en cours d'examen par l'équipe. Nous reviendrons vers toi dès que
+            possible.
+          </p>
+        }
+
+        @if (request.moderatorNote; as note) {
+          <div class="rounded-md bg-gray-50 p-3 text-sm text-gray-700">
+            <span class="font-medium">Note de l'équipe : </span>{{ note }}
+          </div>
+        }
+      </mat-card>
+    }
+
+    @if (submitSucceeded()) {
+      <p
+        role="status"
+        aria-live="polite"
+        class="rounded-md bg-green-50 px-3 py-2 text-sm text-green-700"
+      >
+        Ta demande a bien été envoyée. L'équipe l'examinera dans les meilleurs délais.
+      </p>
+    }
+
+    @if (showForm()) {
+      <mat-card class="flex flex-col gap-4 p-4 sm:p-6">
+        <h2 class="text-lg font-medium">Décrire ta situation</h2>
+        <p class="text-xs text-gray-500">
+          Prends le temps qu'il te faut. Ce message est confidentiel, lu uniquement par l'équipe de
+          modération — jamais par un recruteur.
+        </p>
+
+        <form
+          [formGroup]="messageForm"
+          (ngSubmit)="onSubmit()"
+          novalidate
+          class="flex flex-col gap-2"
+          aria-label="Demande d'urgence"
+        >
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Ton message</mat-label>
+            <textarea
+              matInput
+              formControlName="message"
+              rows="5"
+              required
+              id="urgent-request-message"
+            ></textarea>
+            @if (messageForm.controls.message.invalid && messageForm.controls.message.touched) {
+              <mat-error>
+                @if (messageForm.controls.message.hasError('required')) {
+                  Le message est requis.
+                } @else if (messageForm.controls.message.hasError('minlength')) {
+                  Le message doit contenir au moins 10 caractères.
+                } @else if (messageForm.controls.message.hasError('maxlength')) {
+                  Le message ne peut pas dépasser 1000 caractères.
+                }
+              </mat-error>
+            }
+          </mat-form-field>
+
+          <p class="-mt-2 text-right text-xs text-gray-500">{{ characterCount() }} / 1000</p>
+
+          @if (submitErrorMessage(); as message) {
+            <p role="alert" aria-live="polite" class="text-sm text-red-700">{{ message }}</p>
+          }
+
+          <button
+            id="urgent-request-submit-button"
+            mat-flat-button
+            color="primary"
+            type="submit"
+            class="flex min-h-11 w-full items-center justify-center gap-2"
+            [disabled]="createMutation.isPending()"
+          >
+            @if (createMutation.isPending()) {
+              <mat-spinner diameter="20" aria-hidden="true" />
+            }
+            <span>{{ createMutation.isPending() ? 'Envoi en cours…' : 'Envoyer ma demande' }}</span>
+          </button>
+        </form>
+      </mat-card>
+    }
+  }
+</section>
