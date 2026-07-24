@@ -10,6 +10,28 @@
     <span class="text-base font-medium sm:text-lg">Espace étudiant</span>
   </mat-toolbar>
 
+  <nav
+    class="flex w-full items-center gap-1 overflow-x-auto border-b border-gray-200 px-2 sm:px-4"
+    aria-label="Navigation espace étudiant"
+  >
+    <a
+      id="nav-offers-link"
+      routerLink="/etudiant/offres"
+      routerLinkActive="border-b-2 border-blue-600 font-semibold text-blue-700"
+      class="flex min-h-11 shrink-0 items-center px-3 text-sm text-gray-700"
+    >
+      Offres
+    </a>
+    <a
+      id="nav-applications-link"
+      routerLink="/etudiant/candidatures"
+      routerLinkActive="border-b-2 border-blue-600 font-semibold text-blue-700"
+      class="flex min-h-11 shrink-0 items-center px-3 text-sm text-gray-700"
+    >
+      Candidatures
+    </a>
+  </nav>
+
   <main class="mx-auto w-full max-w-screen-md flex-1 px-4 py-6 sm:px-6 lg:max-w-screen-lg lg:px-8">
     <router-outlet />
   </main>

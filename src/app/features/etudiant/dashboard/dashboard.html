@@ -1,6 +1,29 @@
-<mat-card class="flex flex-col gap-2 p-4">
-  <mat-card-title class="text-lg">Tableau de bord étudiant</mat-card-title>
-  <mat-card-content class="text-sm text-gray-600">
-    Profil, candidatures et offres compatibles avec ton emploi du temps arriveront ici (Épic 2).
-  </mat-card-content>
-</mat-card>
+<div class="flex flex-col gap-4">
+  <mat-card class="flex flex-col gap-2 p-4">
+    <mat-card-title class="text-lg">Tableau de bord étudiant</mat-card-title>
+    <mat-card-content class="text-sm text-gray-600">
+      Retrouve les offres publiées et suis l'état de tes candidatures.
+    </mat-card-content>
+  </mat-card>
+
+  <nav class="flex flex-col gap-3" aria-label="Navigation étudiant">
+    <a
+      id="dashboard-offers-link"
+      routerLink="/etudiant/offres"
+      mat-stroked-button
+      class="flex min-h-11 w-full items-center justify-center gap-2"
+    >
+      <mat-icon aria-hidden="true">work_outline</mat-icon>
+      <span>Parcourir les offres</span>
+    </a>
+    <a
+      id="dashboard-applications-link"
+      routerLink="/etudiant/candidatures"
+      mat-stroked-button
+      class="flex min-h-11 w-full items-center justify-center gap-2"
+    >
+      <mat-icon aria-hidden="true">assignment</mat-icon>
+      <span>Mes candidatures</span>
+    </a>
+  </nav>
+</div>

@@ -1,0 +1,174 @@
+<section class="mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 py-6 sm:px-6">
+  <div class="flex items-center justify-between gap-2">
+    <h1 class="text-2xl font-semibold sm:text-3xl">Détail de l'offre</h1>
+    <a id="back-link" mat-stroked-button routerLink="/etudiant/offres" class="min-h-11">Retour</a>
+  </div>
+
+  @if (offerQuery.isPending()) {
+    <div class="flex items-center justify-center gap-2 py-10 text-sm text-gray-600">
+      <mat-spinner diameter="24" aria-hidden="true" />
+      <span>Chargement de l'offre…</span>
+    </div>
+  } @else if (offerErrorMessage(); as message) {
+    <p role="alert" aria-live="polite" class="text-sm text-red-700">{{ message }}</p>
+  } @else if (offerQuery.data(); as offer) {
+    <mat-card class="flex flex-col gap-3 p-4 sm:p-6">
+      <span class="text-lg font-medium">{{ offer.title }}</span>
+      <p class="whitespace-pre-line text-sm text-gray-700">{{ offer.description }}</p>
+
+      <dl class="grid grid-cols-1 gap-1 text-sm text-gray-600 sm:grid-cols-2">
+        <div>
+          <dt class="inline font-medium text-gray-700">Type :</dt>
+          <dd class="inline">{{ opportunityTypeLabel(offer.opportunityType) }}</dd>
+        </div>
+        <div>
+          <dt class="inline font-medium text-gray-700">Lieu :</dt>
+          <dd class="inline">{{ offer.location }}</dd>
+        </div>
+        <div>
+          <dt class="inline font-medium text-gray-700">Durée :</dt>
+          <dd class="inline">{{ offer.durationLabel }}</dd>
+        </div>
+        <div>
+          <dt class="inline font-medium text-gray-700">Rémunération :</dt>
+          <dd class="inline">{{ offer.compensationLabel }}</dd>
+        </div>
+        <div>
+          <dt class="inline font-medium text-gray-700">Publiée le :</dt>
+          <dd class="inline">{{ offer.publishedAt | date: 'dd/MM/yyyy' : 'UTC' }}</dd>
+        </div>
+      </dl>
+
+      @if (offer.requiredSkills.length > 0) {
+        <div class="flex flex-col gap-1">
+          <h3 class="text-sm font-medium text-gray-700">Compétences recherchées</h3>
+          <ul class="flex flex-wrap gap-2">
+            @for (skill of offer.requiredSkills; track skill) {
+              <li class="rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700">{{ skill }}</li>
+            }
+          </ul>
+        </div>
+      }
+
+      @if (offer.availabilitySlots.length > 0) {
+        <div class="flex flex-col gap-1">
+          <h3 class="text-sm font-medium text-gray-700">Créneaux recherchés</h3>
+          <ul class="flex flex-col divide-y divide-gray-200">
+            @for (slot of offer.availabilitySlots; track $index) {
+              <li class="flex items-center justify-between gap-3 py-2 text-sm text-gray-700">
+                <span class="font-medium">{{ dayOfWeekLabel(slot.dayOfWeek) }}</span>
+                <span>{{ slot.startTime }} – {{ slot.endTime }}</span>
+              </li>
+            }
+          </ul>
+        </div>
+      }
+    </mat-card>
+
+    <mat-card class="flex flex-col gap-2 p-4 sm:p-6">
+      <h2 class="text-lg font-medium">Recruteur</h2>
+      <span class="text-sm font-medium">{{ offer.recruiter.structureName }}</span>
+      <span class="text-xs text-gray-600">
+        {{ structureTypeLabel(offer.recruiter.structureType) }} · {{ offer.recruiter.location }}
+      </span>
+      @if (offer.recruiter.description) {
+        <p class="whitespace-pre-line text-sm text-gray-700">{{ offer.recruiter.description }}</p>
+      }
+    </mat-card>
+
+    <mat-card class="flex flex-col gap-4 p-4 sm:p-6">
+      <h2 class="text-lg font-medium">Candidature</h2>
+
+      @if (applyMutation.isSuccess()) {
+        <p
+          role="status"
+          aria-live="polite"
+          class="flex min-h-11 items-center gap-2 rounded-md bg-green-50 px-3 py-2 text-sm text-green-700"
+        >
+          <mat-icon aria-hidden="true" class="!h-5 !w-5 !text-[20px] !leading-5">check_circle</mat-icon>
+          <span>Ta candidature a bien été envoyée.</span>
+        </p>
+        <a
+          id="view-applications-link"
+          mat-stroked-button
+          routerLink="/etudiant/candidatures"
+          class="min-h-11 w-full sm:w-auto"
+        >
+          Voir mes candidatures
+        </a>
+      } @else {
+        @if (applyErrorMessage(); as message) {
+          <p role="alert" aria-live="polite" class="text-sm text-red-700">{{ message }}</p>
+          @if (profileRequired()) {
+            <a
+              id="complete-profile-link"
+              mat-stroked-button
+              routerLink="/etudiant/profil"
+              class="min-h-11 w-full sm:w-auto"
+            >
+              Compléter mon profil
+            </a>
+          }
+        }
+
+        @if (!showApplyForm()) {
+          <button
+            id="show-apply-form-button"
+            mat-flat-button
+            color="primary"
+            type="button"
+            class="min-h-11 w-full sm:w-auto"
+            (click)="onShowApplyForm()"
+          >
+            Postuler
+          </button>
+        } @else {
+          <form
+            [formGroup]="applyForm"
+            (ngSubmit)="onSubmitApply()"
+            novalidate
+            class="flex flex-col gap-3"
+            aria-label="Postuler à cette offre"
+          >
+            <mat-form-field appearance="outline" class="w-full">
+              <mat-label>Message (optionnel)</mat-label>
+              <textarea
+                id="apply-message-textarea"
+                matInput
+                formControlName="message"
+                rows="4"
+                maxlength="1000"
+              ></textarea>
+              @if (applyForm.controls.message.invalid && applyForm.controls.message.touched) {
+                <mat-error>Le message ne peut pas dépasser 1000 caractères.</mat-error>
+              }
+            </mat-form-field>
+
+            <div class="flex flex-col gap-3 sm:flex-row">
+              <button
+                id="submit-apply-button"
+                mat-flat-button
+                color="primary"
+                type="submit"
+                class="min-h-11 flex-1"
+                [disabled]="applyMutation.isPending()"
+              >
+                {{ applyMutation.isPending() ? 'Envoi…' : 'Envoyer ma candidature' }}
+              </button>
+              <button
+                id="cancel-apply-button"
+                mat-stroked-button
+                type="button"
+                class="min-h-11 flex-1"
+                [disabled]="applyMutation.isPending()"
+                (click)="onCancelApply()"
+              >
+                Annuler
+              </button>
+            </div>
+          </form>
+        }
+      }
+    </mat-card>
+  }
+</section>

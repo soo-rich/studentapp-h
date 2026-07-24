@@ -1,0 +1,146 @@
+<section class="mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 py-6 sm:px-6">
+  <div class="flex items-center justify-between gap-2">
+    <h1 class="text-2xl font-semibold sm:text-3xl">Ma candidature</h1>
+    <a id="back-link" mat-stroked-button routerLink="/etudiant/candidatures" class="min-h-11">Retour</a>
+  </div>
+
+  @if (detailQuery.isPending()) {
+    <div class="flex items-center justify-center gap-2 py-10 text-sm text-gray-600">
+      <mat-spinner diameter="24" aria-hidden="true" />
+      <span>Chargement de la candidature…</span>
+    </div>
+  } @else if (detailErrorMessage(); as message) {
+    <p role="alert" aria-live="polite" class="text-sm text-red-700">{{ message }}</p>
+  } @else if (detailQuery.data(); as application) {
+    <mat-card class="flex flex-col gap-3 p-4 sm:p-6">
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <span class="min-w-0 truncate text-lg font-medium">{{ application.offer.title }}</span>
+        <span
+          class="shrink-0 rounded-full px-2 py-0.5 text-xs font-medium {{
+            statusBadgeClasses(application.status)
+          }}"
+        >
+          {{ statusLabel(application.status) }}
+        </span>
+      </div>
+      <span class="text-sm text-gray-600">{{ application.offer.structureName }}</span>
+
+      @if (application.message) {
+        <div class="flex flex-col gap-1">
+          <h3 class="text-sm font-medium text-gray-700">Ton message</h3>
+          <p class="whitespace-pre-line text-sm text-gray-700">{{ application.message }}</p>
+        </div>
+      }
+
+      @if (application.status === 'rejected_moderation' && application.rejectionReason) {
+        <div class="flex flex-col gap-1">
+          <h3 class="text-sm font-medium text-gray-700">Motif du refus</h3>
+          <p class="text-sm text-red-700">{{ application.rejectionReason }}</p>
+        </div>
+      }
+
+      <dl class="grid grid-cols-1 gap-1 text-sm text-gray-600 sm:grid-cols-2">
+        <div>
+          <dt class="inline font-medium text-gray-700">Déposée le :</dt>
+          <dd class="inline">{{ application.createdAt | date: 'dd/MM/yyyy' : 'UTC' }}</dd>
+        </div>
+        <div>
+          <dt class="inline font-medium text-gray-700">Mise à jour le :</dt>
+          <dd class="inline">{{ application.updatedAt | date: 'dd/MM/yyyy' : 'UTC' }}</dd>
+        </div>
+      </dl>
+    </mat-card>
+
+    @if (canRespondToSelection()) {
+      <mat-card class="flex flex-col gap-4 p-4 sm:p-6">
+        <h2 class="text-lg font-medium">Mise en relation</h2>
+        <p class="text-sm text-gray-600">
+          Ce recruteur souhaite entrer en contact avec toi. Accepte pour lui transmettre ton
+          identité et tes coordonnées, ou refuse si tu ne souhaites pas donner suite.
+        </p>
+
+        @if (acceptErrorMessage(); as message) {
+          <p role="alert" aria-live="polite" class="text-sm text-red-700">{{ message }}</p>
+        }
+        @if (declineErrorMessage(); as message) {
+          <p role="alert" aria-live="polite" class="text-sm text-red-700">{{ message }}</p>
+        }
+
+        <div class="flex flex-col gap-3 sm:flex-row">
+          <button
+            id="accept-button"
+            mat-flat-button
+            color="primary"
+            type="button"
+            class="min-h-11 flex-1"
+            [disabled]="acceptMutation.isPending() || declineMutation.isPending()"
+            (click)="onAccept()"
+          >
+            {{ acceptMutation.isPending() ? 'Envoi…' : 'Accepter' }}
+          </button>
+          <button
+            id="decline-button"
+            mat-stroked-button
+            color="warn"
+            type="button"
+            class="min-h-11 flex-1"
+            [disabled]="acceptMutation.isPending() || declineMutation.isPending()"
+            (click)="onDecline()"
+          >
+            {{ declineMutation.isPending() ? 'Envoi…' : 'Refuser' }}
+          </button>
+        </div>
+      </mat-card>
+    }
+
+    @if (canWithdraw()) {
+      <mat-card class="flex flex-col gap-4 p-4 sm:p-6">
+        <h2 class="text-lg font-medium">Retirer ma candidature</h2>
+
+        @if (withdrawErrorMessage(); as message) {
+          <p role="alert" aria-live="polite" class="text-sm text-red-700">{{ message }}</p>
+        }
+
+        @if (!showWithdrawConfirm()) {
+          <button
+            id="show-withdraw-button"
+            mat-stroked-button
+            color="warn"
+            type="button"
+            class="min-h-11 w-full sm:w-auto"
+            (click)="onShowWithdrawConfirm()"
+          >
+            Retirer ma candidature
+          </button>
+        } @else {
+          <p class="text-sm text-gray-700">
+            Es-tu sûr(e) de vouloir retirer cette candidature ? Cette action est définitive.
+          </p>
+          <div class="flex flex-col gap-3 sm:flex-row">
+            <button
+              id="confirm-withdraw-button"
+              mat-flat-button
+              color="warn"
+              type="button"
+              class="min-h-11 flex-1"
+              [disabled]="withdrawMutation.isPending()"
+              (click)="onConfirmWithdraw()"
+            >
+              {{ withdrawMutation.isPending() ? 'Retrait en cours…' : 'Confirmer le retrait' }}
+            </button>
+            <button
+              id="cancel-withdraw-button"
+              mat-stroked-button
+              type="button"
+              class="min-h-11 flex-1"
+              [disabled]="withdrawMutation.isPending()"
+              (click)="onCancelWithdraw()"
+            >
+              Annuler
+            </button>
+          </div>
+        }
+      </mat-card>
+    }
+  }
+</section>

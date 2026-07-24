@@ -1,0 +1,109 @@
+<section class="mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 py-6 sm:px-6">
+  <div class="flex flex-col gap-2">
+    <h1 class="text-2xl font-semibold sm:text-3xl">Offres</h1>
+    <p class="text-sm text-gray-600 sm:text-base">
+      Parcours les offres publiées et compatibles avec ton emploi du temps.
+    </p>
+  </div>
+
+  <form
+    [formGroup]="filterForm"
+    (ngSubmit)="onApplyFilters()"
+    novalidate
+    class="flex flex-col gap-3"
+    aria-label="Filtrer les offres"
+  >
+    <mat-form-field appearance="outline" class="w-full">
+      <mat-label>Type d'opportunité</mat-label>
+      <mat-select id="opportunity-type-filter-select" formControlName="opportunityType">
+        @for (option of opportunityTypeFilterOptions; track option.value) {
+          <mat-option [value]="option.value">{{ option.label }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="w-full">
+      <mat-label>Compétence</mat-label>
+      <input
+        id="skill-filter-input"
+        matInput
+        formControlName="skill"
+        placeholder="Ex. Gestion de projet"
+      />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="w-full">
+      <mat-label>Lieu</mat-label>
+      <input id="location-filter-input" matInput formControlName="location" placeholder="Ex. Lomé" />
+    </mat-form-field>
+
+    <button
+      id="apply-filters-button"
+      mat-flat-button
+      color="primary"
+      type="submit"
+      class="min-h-11 w-full sm:w-auto"
+    >
+      Filtrer
+    </button>
+  </form>
+
+  @if (offersQuery.isPending()) {
+    <div class="flex items-center justify-center gap-2 py-10 text-sm text-gray-600">
+      <mat-spinner diameter="24" aria-hidden="true" />
+      <span>Chargement des offres…</span>
+    </div>
+  } @else if (errorMessage(); as message) {
+    <p role="alert" aria-live="polite" class="text-sm text-red-700">{{ message }}</p>
+  } @else if (offersQuery.data(); as page) {
+    @if (page.items.length === 0) {
+      <p class="text-sm text-gray-600">Aucune offre ne correspond à ta recherche.</p>
+    } @else {
+      <ul class="flex flex-col gap-3">
+        @for (offer of page.items; track offer.id) {
+          <li>
+            <a
+              [routerLink]="['/etudiant/offres', offer.id]"
+              class="flex min-h-11 flex-col gap-1 rounded-md border border-gray-200 p-4 hover:bg-gray-50"
+            >
+              <span class="min-w-0 truncate text-sm font-medium">{{ offer.title }}</span>
+              <span class="truncate text-xs text-gray-600">{{ offer.recruiter.structureName }}</span>
+              <div class="flex flex-wrap items-center gap-2 text-xs text-gray-600">
+                <span>{{ opportunityTypeLabel(offer.opportunityType) }}</span>
+                <span aria-hidden="true">·</span>
+                <span>{{ offer.location }}</span>
+                <span aria-hidden="true">·</span>
+                <span>{{ offer.durationLabel }}</span>
+              </div>
+              <span class="text-xs font-medium text-gray-700">{{ offer.compensationLabel }}</span>
+            </a>
+          </li>
+        }
+      </ul>
+
+      <div class="flex items-center justify-between gap-3 pt-2">
+        <button
+          id="previous-page-button"
+          mat-stroked-button
+          type="button"
+          class="min-h-11"
+          [disabled]="!canGoPrevious()"
+          (click)="onPreviousPage()"
+        >
+          Précédent
+        </button>
+        <span class="text-sm text-gray-600">Page {{ page.page }}</span>
+        <button
+          id="next-page-button"
+          mat-stroked-button
+          type="button"
+          class="min-h-11"
+          [disabled]="!canGoNext()"
+          (click)="onNextPage()"
+        >
+          Suivant
+        </button>
+      </div>
+    }
+  }
+</section>

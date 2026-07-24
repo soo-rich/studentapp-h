@@ -1,0 +1,86 @@
+<section class="mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 py-6 sm:px-6">
+  <div class="flex flex-col gap-2">
+    <h1 class="text-2xl font-semibold sm:text-3xl">Mes candidatures</h1>
+    <p class="text-sm text-gray-600 sm:text-base">Suis l'état de tes candidatures aux offres.</p>
+  </div>
+
+  <mat-form-field appearance="outline" class="w-full">
+    <mat-label>Statut</mat-label>
+    <mat-select
+      id="status-filter-select"
+      [value]="status()"
+      (selectionChange)="onStatusChange($event)"
+      aria-label="Filtrer par statut"
+    >
+      @for (option of statusFilterOptions; track option.value) {
+        <mat-option [value]="option.value">{{ option.label }}</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+
+  @if (applicationsQuery.isPending()) {
+    <div class="flex items-center justify-center gap-2 py-10 text-sm text-gray-600">
+      <mat-spinner diameter="24" aria-hidden="true" />
+      <span>Chargement de tes candidatures…</span>
+    </div>
+  } @else if (errorMessage(); as message) {
+    <p role="alert" aria-live="polite" class="text-sm text-red-700">{{ message }}</p>
+  } @else if (applicationsQuery.data(); as page) {
+    @if (page.items.length === 0) {
+      <p class="text-sm text-gray-600">Aucune candidature pour ce filtre.</p>
+    } @else {
+      <ul class="flex flex-col gap-3">
+        @for (application of page.items; track application.id) {
+          <li>
+            <a
+              [routerLink]="['/etudiant/candidatures', application.id]"
+              class="flex min-h-11 flex-col gap-2 rounded-md border border-gray-200 p-4 hover:bg-gray-50"
+            >
+              <div class="flex items-center justify-between gap-2">
+                <span class="min-w-0 truncate text-sm font-medium">{{ application.offer.title }}</span>
+                <span
+                  class="shrink-0 rounded-full px-2 py-0.5 text-xs font-medium {{
+                    statusBadgeClasses(application.status)
+                  }}"
+                >
+                  {{ statusLabel(application.status) }}
+                </span>
+              </div>
+              <span class="truncate text-xs text-gray-600">{{ application.offer.structureName }}</span>
+              @if (application.status === 'rejected_moderation' && application.rejectionReason) {
+                <p class="text-xs text-red-700">Motif : {{ application.rejectionReason }}</p>
+              }
+              <span class="text-xs text-gray-500">
+                Candidature du {{ application.createdAt | date: 'dd/MM/yyyy' : 'UTC' }}
+              </span>
+            </a>
+          </li>
+        }
+      </ul>
+
+      <div class="flex items-center justify-between gap-3 pt-2">
+        <button
+          id="previous-page-button"
+          mat-stroked-button
+          type="button"
+          class="min-h-11"
+          [disabled]="!canGoPrevious()"
+          (click)="onPreviousPage()"
+        >
+          Précédent
+        </button>
+        <span class="text-sm text-gray-600">Page {{ page.page }}</span>
+        <button
+          id="next-page-button"
+          mat-stroked-button
+          type="button"
+          class="min-h-11"
+          [disabled]="!canGoNext()"
+          (click)="onNextPage()"
+        >
+          Suivant
+        </button>
+      </div>
+    }
+  }
+</section>
