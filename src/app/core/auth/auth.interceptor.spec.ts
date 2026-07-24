@@ -8,16 +8,15 @@ import { environment } from '../../../environments/environment';
 import { authInterceptor } from './auth.interceptor';
 import { SessionService } from './session.service';
 
-// NOTE — filtrage par origine (`environment.apiBaseUrl`, PAS les autres origines) : non
-// couvert ici. Le système de test unitaire Angular (`@angular/build:unit-test`, vitest)
-// interdit explicitement `vi.mock` sur des imports relatifs locaux ("use Angular TestBed
-// for mocking dependencies"), et `environment.apiBaseUrl` vaut `''` dans ce build de test
-// (pas de fileReplacement `development` sur la cible `test`, voir angular.json) : toute
-// chaîne "commence" trivialement par `''` (`String.prototype.startsWith('')` vaut toujours
-// `true`), donc aucune URL "d'une autre origine" n'est constructible pour démontrer
-// l'exclusion. Le comportement reste implémenté (voir `auth.interceptor.ts`) et exercé
-// manuellement dès que `environment.apiBaseUrl` est renseigné (déjà le cas en
-// développement, `environment.development.ts`).
+// `environment.apiBaseUrl` vaut `''` dans ce build de test (pas de fileReplacement
+// `development` sur la cible `test`, voir angular.json) : les requêtes vers l'API sont donc
+// émises en URL RELATIVE ci-dessous (ex. `/students/me`), exactement comme en développement
+// derrière `proxy.conf.js`. C'est ce chemin de code (`isApiRequest` avec `apiBaseUrl` vide,
+// filtrage par `API_PATH_PREFIXES`) qui est exercé par la majorité des tests de ce fichier ;
+// le test "third-party origin" ci-dessous couvre spécifiquement le cas qui a motivé le
+// correctif : `url.startsWith(environment.apiBaseUrl)` seul, avec `apiBaseUrl === ''`, vaut
+// TOUJOURS `true` (`String.prototype.startsWith('')` est trivialement vrai) et attacherait le
+// Bearer token à N'IMPORTE QUELLE origine — c'est la fuite de token corrigée par cette tâche.
 const apiBaseUrl = environment.apiBaseUrl;
 
 describe('authInterceptor', () => {
@@ -87,6 +86,58 @@ describe('authInterceptor', () => {
       expect(req.request.headers.has('Authorization')).toBe(false);
       req.flush({});
     }
+  });
+
+  // Test de non-régression de la fuite de token : `apiBaseUrl` vaut `''` ici, donc
+  // `url.startsWith(environment.apiBaseUrl)` seul (l'ancienne implémentation bogguée) vaudrait
+  // toujours `true`, y compris pour cette URL absolue vers une origine tierce, et attacherait
+  // le Bearer token à une requête qui ne va pas du tout vers `studentapi`. MUTATION : si on
+  // restaure `isApiRequest` à `url.startsWith(environment.apiBaseUrl)` seul, ce test rougit.
+  it('never adds an Authorization header to a request targeting a third-party absolute origin', () => {
+    sessionServiceMock.accessToken.mockReturnValue('access-token-1');
+
+    httpClient.get('https://tiers.example/collecte').subscribe();
+
+    const req = httpMock.expectOne('https://tiers.example/collecte');
+    expect(req.request.headers.has('Authorization')).toBe(false);
+    req.flush({});
+  });
+
+  // Fige l'ANCRAGE du filtrage par préfixe. Les deux URLs ci-dessous contiennent un préfixe
+  // d'API connu, mais jamais en tête : un matching par sous-chaîne (`includes`) ou un
+  // relâchement de l'ancrage les traiterait comme des requêtes API et enverrait le token à
+  // un tiers. Sans ce test, une mutation `startsWith` -> `includes` passait inaperçue (trou
+  // de couverture relevé en validation de T20).
+  it.each([
+    'https://evil.example/x/auth/y', // préfixe connu, mais en position non-initiale
+    '//evil.example/auth', // protocol-relative : résolue vers une AUTRE origine par le navigateur
+  ])('never adds an Authorization header to the decoy URL %s', (url) => {
+    sessionServiceMock.accessToken.mockReturnValue('access-token-1');
+
+    httpClient.get(url).subscribe();
+
+    const req = httpMock.expectOne(url);
+    expect(req.request.headers.has('Authorization')).toBe(false);
+    req.flush({});
+  });
+
+  // Couvre chaque préfixe connu de `API_PATH_PREFIXES` (contrat `studentapi` v0.3.0) en URL
+  // RELATIVE (comportement réel en développement derrière `proxy.conf.js`, `apiBaseUrl` vide).
+  // MUTATION : retirer un de ces préfixes de `API_PATH_PREFIXES` fait rougir l'itération
+  // correspondante (le header `Authorization` disparaît pour ce préfixe).
+  it.each([
+    '/auth/me',
+    '/students/me/profile',
+    '/moderation/verifications',
+    '/verification/documents',
+  ])('adds an Authorization header to a relative request under the known API prefix %s', (path) => {
+    sessionServiceMock.accessToken.mockReturnValue('access-token-1');
+
+    httpClient.get(path).subscribe();
+
+    const req = httpMock.expectOne(path);
+    expect(req.request.headers.get('Authorization')).toBe('Bearer access-token-1');
+    req.flush({});
   });
 
   it('refreshes the access token once on a 401 and retries the original request with the new token', async () => {

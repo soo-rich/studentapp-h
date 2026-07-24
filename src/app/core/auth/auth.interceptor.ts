@@ -14,8 +14,28 @@ import { SessionService } from './session.service';
  */
 const PUBLIC_AUTH_PATHS = ['/auth/login', '/auth/register', '/auth/refresh'];
 
+/**
+ * Préfixes de chemin des endpoints du contrat `studentapi` (`docs/openapi.yaml`, v0.3.0) —
+ * tags `auth`, `students`, `moderation`, `verification`. Utilisés UNIQUEMENT quand
+ * `environment.apiBaseUrl` est vide (développement derrière `proxy.conf.js`, ou production
+ * servie depuis le même domaine que l'API) : dans ce cas les requêtes de nos propres services
+ * partent en URL relative (ex. `/students/me/profile`), et il faut un moyen de les reconnaître
+ * qui ne soit PAS `url.startsWith(environment.apiBaseUrl)` — cette expression vaudrait toujours
+ * `true` avec un `apiBaseUrl` vide (`String.prototype.startsWith('')` est trivialement vrai) et
+ * attacherait le Bearer token à N'IMPORTE QUELLE URL, y compris vers une origine tierce absolue
+ * (fuite de token). Cette liste doit rester synchronisée avec `proxy.conf.js`.
+ */
+const API_PATH_PREFIXES = ['/auth', '/students', '/moderation', '/verification'];
+
 function isApiRequest(url: string): boolean {
-  return url.startsWith(environment.apiBaseUrl);
+  if (environment.apiBaseUrl !== '') {
+    return url.startsWith(environment.apiBaseUrl);
+  }
+
+  // `apiBaseUrl` vide : seul le chemin (relatif, même origine) compte. Une URL absolue vers
+  // une autre origine (`https://tiers.example/...`) ne commence par aucun de ces préfixes et
+  // n'est donc jamais traitée comme une requête API.
+  return API_PATH_PREFIXES.some((prefix) => url.startsWith(prefix));
 }
 
 function isPublicAuthEndpoint(url: string): boolean {
@@ -28,9 +48,11 @@ function withBearerToken(req: HttpRequest<unknown>, accessToken: string): HttpRe
 
 /**
  * Intercepteur HTTP fonctionnel (FE3) :
- * - ajoute `Authorization: Bearer <accessToken>` aux requêtes dont l'URL cible
- *   `environment.apiBaseUrl` (jamais aux autres origines), sauf aux endpoints publics
- *   `/auth/login`, `/auth/register`, `/auth/refresh` ;
+ * - ajoute `Authorization: Bearer <accessToken>` aux requêtes API (voir `isApiRequest` :
+ *   `startsWith(environment.apiBaseUrl)` si celui-ci est renseigné — build production avec
+ *   URL absolue —, sinon `startsWith` d'un des `API_PATH_PREFIXES` connus — développement via
+ *   proxy ou production même domaine, URLs relatives), jamais aux autres origines, sauf aux
+ *   endpoints publics `/auth/login`, `/auth/register`, `/auth/refresh` ;
  * - sur une réponse `401` d'une requête API, tente UN SEUL renouvellement via
  *   `SessionService.refreshAccessToken()` :
  *   - succès -> rejoue la requête d'origine avec le nouveau token ;
