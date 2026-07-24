@@ -1,0 +1,88 @@
+<section class="mx-auto flex w-full max-w-2xl flex-col gap-6 px-4 py-6 sm:px-6">
+  <div class="flex flex-col gap-2">
+    <h1 class="text-2xl font-semibold sm:text-3xl">File des candidatures</h1>
+    <p class="text-sm text-gray-600 sm:text-base">
+      Filtre les candidatures étudiantes avant transmission aux recruteurs.
+    </p>
+  </div>
+
+  <mat-button-toggle-group
+    class="flex w-full flex-wrap"
+    [value]="status()"
+    (change)="onStatusChange($event)"
+    aria-label="Filtrer par statut"
+  >
+    @for (option of statusFilterOptions; track option.value) {
+      <mat-button-toggle [value]="option.value" class="min-h-11 flex-1">
+        {{ option.label }}
+      </mat-button-toggle>
+    }
+  </mat-button-toggle-group>
+
+  @if (queueQuery.isPending()) {
+    <div class="flex items-center justify-center gap-2 py-10 text-sm text-gray-600">
+      <mat-spinner diameter="24" aria-hidden="true" />
+      <span>Chargement de la file…</span>
+    </div>
+  } @else if (errorMessage(); as message) {
+    <p role="alert" aria-live="polite" class="text-sm text-red-700">{{ message }}</p>
+  } @else if (queueQuery.data(); as page) {
+    @if (page.items.length === 0) {
+      <p class="text-sm text-gray-600">Aucune candidature.</p>
+    } @else {
+      <ul class="flex flex-col gap-3">
+        @for (item of page.items; track item.id) {
+          <li>
+            <a
+              [routerLink]="['/moderation', 'candidatures', item.id]"
+              class="flex min-h-11 flex-col gap-2 rounded-md border border-gray-200 p-4 hover:bg-gray-50"
+            >
+              <div class="flex items-center justify-between gap-2">
+                <span class="min-w-0 truncate text-sm font-medium">{{ item.offer.title }}</span>
+                <span
+                  class="inline-flex w-fit shrink-0 items-center rounded-full px-3 py-1 text-xs font-medium"
+                  [class]="statusToneClasses(item.status)"
+                >
+                  {{ statusLabel(item.status) }}
+                </span>
+              </div>
+              <div class="flex flex-wrap items-center gap-2 text-xs text-gray-600">
+                <span class="truncate">{{ item.offer.structureName }}</span>
+                <span aria-hidden="true">·</span>
+                <span class="truncate">{{ item.student.firstName }} {{ item.student.lastName }}</span>
+                <span aria-hidden="true">·</span>
+                <span class="truncate">{{ item.student.university }}</span>
+                <span aria-hidden="true">·</span>
+                <span>{{ item.createdAt | date: 'dd/MM/yyyy' : 'UTC' }}</span>
+              </div>
+            </a>
+          </li>
+        }
+      </ul>
+
+      <div class="flex items-center justify-between gap-3 pt-2">
+        <button
+          id="previous-page-button"
+          mat-stroked-button
+          type="button"
+          class="min-h-11"
+          [disabled]="!canGoPrevious()"
+          (click)="onPreviousPage()"
+        >
+          Précédent
+        </button>
+        <span class="text-sm text-gray-600">Page {{ page.page }}</span>
+        <button
+          id="next-page-button"
+          mat-stroked-button
+          type="button"
+          class="min-h-11"
+          [disabled]="!canGoNext()"
+          (click)="onNextPage()"
+        >
+          Suivant
+        </button>
+      </div>
+    }
+  }
+</section>
