@@ -15,8 +15,8 @@ import { SessionService } from './session.service';
 const PUBLIC_AUTH_PATHS = ['/auth/login', '/auth/register', '/auth/refresh'];
 
 /**
- * Préfixes de chemin des endpoints du contrat `studentapi` (`docs/openapi.yaml`, v0.3.0) —
- * tags `auth`, `students`, `moderation`, `verification`. Utilisés UNIQUEMENT quand
+ * Préfixes de chemin des endpoints du contrat `studentapi` (`docs/openapi.yaml`, v0.4.0) —
+ * tags `auth`, `students`, `moderation`, `verification`, `recruiters`, `offers`. Utilisés UNIQUEMENT quand
  * `environment.apiBaseUrl` est vide (développement derrière `proxy.conf.js`, ou production
  * servie depuis le même domaine que l'API) : dans ce cas les requêtes de nos propres services
  * partent en URL relative (ex. `/students/me/profile`), et il faut un moyen de les reconnaître
@@ -25,7 +25,14 @@ const PUBLIC_AUTH_PATHS = ['/auth/login', '/auth/register', '/auth/refresh'];
  * attacherait le Bearer token à N'IMPORTE QUELLE URL, y compris vers une origine tierce absolue
  * (fuite de token). Cette liste doit rester synchronisée avec `proxy.conf.js`.
  */
-const API_PATH_PREFIXES = ['/auth', '/students', '/moderation', '/verification'];
+const API_PATH_PREFIXES = [
+  '/auth',
+  '/students',
+  '/moderation',
+  '/verification',
+  '/recruiters',
+  '/offers',
+];
 
 function isApiRequest(url: string): boolean {
   if (environment.apiBaseUrl !== '') {
