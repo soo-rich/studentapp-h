@@ -1,4 +1,5 @@
 import type { User, VerificationStatus } from '../../../core/auth/auth.types';
+import type { ApiErrorResponse } from '../../../core/http/api-error.types';
 import type { DocumentType, VerificationDocument } from '../../verification/data/verification.types';
 import type {
   AvailabilitySlot,
@@ -135,15 +136,10 @@ export type ModerationErrorCode =
 
 /**
  * `components.schemas.ErrorResponse` — format d'erreur générique partagé par toute l'API
- * `studentapi`. Pas encore hébergé dans un module `core/http` commun (aucun n'existe dans ce
- * repo à ce jour, et sa création est hors périmètre de cette tâche) : redéfini ici localement,
- * avec `error` restreint au sous-ensemble de codes métier propres à `/moderation/*` pour
- * permettre un `switch`/narrowing sûr côté UI sur le corps d'un `HttpErrorResponse.error`.
+ * `studentapi`, dérivé du type central `core/http/api-error.types.ts` avec `error` restreint
+ * au sous-ensemble de codes métier propres à `/moderation/*` pour permettre un
+ * `switch`/narrowing sûr côté UI sur le corps d'un `HttpErrorResponse.error`.
  */
-export interface ModerationErrorResponse {
-  statusCode: number;
+export type ModerationErrorResponse = Omit<ApiErrorResponse, 'error'> & {
   error: ModerationErrorCode;
-  message: string;
-  timestamp: string;
-  path: string;
-}
+};

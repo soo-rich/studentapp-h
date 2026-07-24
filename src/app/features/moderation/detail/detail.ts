@@ -1,5 +1,4 @@
 import { DatePipe } from '@angular/common';
-import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -13,6 +12,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { map } from 'rxjs';
 
 import { Role } from '../../../core/auth/role';
+import { extractErrorMessage } from '../../../core/http/api-error';
 import { VerificationBadge } from '../../../shared/verification-badge/verification-badge';
 import { ModerationApiService } from '../data/moderation-api.service';
 import {
@@ -38,34 +38,6 @@ function formatFileSize(bytes: number): string {
     return `${Math.round(bytes / BYTES_PER_KO)} Ko`;
   }
   return `${(bytes / BYTES_PER_MO).toFixed(1)} Mo`;
-}
-
-/**
- * Corps attendu dans `HttpErrorResponse.error` sur un échec de `/moderation/*` (contrat
- * `studentapi`, `components.schemas.ErrorResponse`). Redéfini localement, en LECTURE SEULE
- * pour ce composant — même pattern que `register-recruteur.ts`/`login.ts` : jamais parsé,
- * uniquement affiché tel quel (déjà traduit fr/en par le backend).
- */
-interface ApiErrorBody {
-  message: string;
-}
-
-function isApiErrorBody(value: unknown): value is ApiErrorBody {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    typeof (value as { message?: unknown }).message === 'string'
-  );
-}
-
-const GENERIC_ERROR_MESSAGE = 'Une erreur est survenue. Réessaie dans un instant.';
-
-/** Extrait le message traduit d'une erreur HTTP, sans jamais parser son contenu. */
-function extractErrorMessage(error: Error): string {
-  if (error instanceof HttpErrorResponse && isApiErrorBody(error.error)) {
-    return error.error.message;
-  }
-  return GENERIC_ERROR_MESSAGE;
 }
 
 /**

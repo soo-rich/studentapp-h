@@ -1,3 +1,5 @@
+import { ApiErrorResponse } from '../../../core/http/api-error.types';
+
 /**
  * Types miroir du domaine `urgent-request` du contrat d'API partagé `studentapi`
  * (`docs/openapi.yaml`, v0.3.0, tag `profile`, `components.schemas`). Ce fichier CONSOMME
@@ -56,16 +58,10 @@ export type UrgentRequestErrorCode =
 
 /**
  * `components.schemas.ErrorResponse` — format d'erreur générique partagé par toute l'API
- * `studentapi`. Pas encore hébergé dans un module `core/http` commun (aucun n'existe dans ce
- * repo à ce jour, et sa création est hors périmètre de cette tâche) : redéfini ici localement,
- * avec `error` restreint au sous-ensemble de codes métier propres à
- * `/students/me/urgent-request` pour permettre un `switch`/narrowing sûr côté UI sur le corps
- * d'un `HttpErrorResponse.error`.
+ * `studentapi`, dérivé du type central `core/http/api-error.types.ts` avec `error` restreint
+ * au sous-ensemble de codes métier propres à `/students/me/urgent-request` pour permettre un
+ * `switch`/narrowing sûr côté UI sur le corps d'un `HttpErrorResponse.error`.
  */
-export interface UrgentRequestErrorResponse {
-  statusCode: number;
+export type UrgentRequestErrorResponse = Omit<ApiErrorResponse, 'error'> & {
   error: UrgentRequestErrorCode;
-  message: string;
-  timestamp: string;
-  path: string;
-}
+};

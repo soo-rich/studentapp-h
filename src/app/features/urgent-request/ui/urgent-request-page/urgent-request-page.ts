@@ -8,15 +8,12 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
+import { extractErrorMessage } from '../../../../core/http/api-error';
 import {
   injectCreateUrgentRequestMutation,
   injectUrgentRequestQuery,
 } from '../../data/urgent-request.queries';
-import {
-  UrgentRequest,
-  UrgentRequestErrorResponse,
-  UrgentRequestStatus,
-} from '../../data/urgent-request.types';
+import { UrgentRequest, UrgentRequestStatus } from '../../data/urgent-request.types';
 
 /** Libellés fr lisibles pour chaque `UrgentRequestStatus` du contrat (`urgent-request.types.ts`). */
 const STATUS_LABELS: Record<UrgentRequestStatus, string> = {
@@ -34,31 +31,6 @@ const STATUS_BADGE_CLASSES: Record<UrgentRequestStatus, string> = {
   prioritized: 'bg-blue-50 text-blue-700',
   dismissed: 'bg-gray-100 text-gray-600',
 };
-
-/**
- * Corps attendu dans `HttpErrorResponse.error` sur un échec de `/students/me/urgent-request`
- * (contrat `studentapi`, `components.schemas.ErrorResponse`) — réutilise le type déjà exporté
- * par la couche data (`UrgentRequestErrorResponse`, `urgent-request.types.ts`) plutôt que de le
- * redéfinir localement. Jamais parsé pour de la logique : uniquement affiché tel quel, déjà
- * traduit fr/en par le backend.
- */
-function isUrgentRequestErrorResponse(value: unknown): value is UrgentRequestErrorResponse {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    typeof (value as { message?: unknown }).message === 'string'
-  );
-}
-
-const GENERIC_ERROR_MESSAGE = 'Une erreur est survenue. Réessaie dans un instant.';
-
-/** Extrait le message traduit d'une erreur HTTP, sans jamais parser son contenu. */
-function extractErrorMessage(error: Error): string {
-  if (error instanceof HttpErrorResponse && isUrgentRequestErrorResponse(error.error)) {
-    return error.error.message;
-  }
-  return GENERIC_ERROR_MESSAGE;
-}
 
 /**
  * Écran de demande d'urgence (T14, Épic 2) : dépôt d'un message privé de détresse, lu

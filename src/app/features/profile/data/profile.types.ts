@@ -1,3 +1,5 @@
+import { ApiErrorResponse } from '../../../core/http/api-error.types';
+
 /**
  * Types miroir du domaine `profile` du contrat d'API partagé `studentapi`
  * (`docs/openapi.yaml`, v0.3.0, tag `profile`, `components.schemas`). Ce fichier CONSOMME le
@@ -126,15 +128,8 @@ export type ProfileErrorCode = 'PROFILE_NOT_FOUND' | 'PROFILE_SENSITIVE_CONSENT_
 
 /**
  * `components.schemas.ErrorResponse` — format d'erreur générique partagé par toute l'API
- * `studentapi`. Pas encore hébergé dans un module `core/http` commun (aucun n'existe dans ce
- * repo à ce jour, et sa création est hors périmètre de cette tâche) : redéfini ici localement,
- * avec `error` restreint au sous-ensemble de codes métier propres à `/students/me/profile`
- * pour permettre un `switch`/narrowing sûr côté UI sur le corps d'un `HttpErrorResponse.error`.
+ * `studentapi`, dérivé du type central `core/http/api-error.types.ts` avec `error` restreint
+ * au sous-ensemble de codes métier propres à `/students/me/profile` pour permettre un
+ * `switch`/narrowing sûr côté UI sur le corps d'un `HttpErrorResponse.error`.
  */
-export interface ProfileErrorResponse {
-  statusCode: number;
-  error: ProfileErrorCode;
-  message: string;
-  timestamp: string;
-  path: string;
-}
+export type ProfileErrorResponse = Omit<ApiErrorResponse, 'error'> & { error: ProfileErrorCode };

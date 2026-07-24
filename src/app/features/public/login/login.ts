@@ -1,4 +1,3 @@
-import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -13,6 +12,7 @@ import { injectLoginMutation } from '../../../core/auth/auth.queries';
 import { LoginRequest } from '../../../core/auth/auth.types';
 import { Role } from '../../../core/auth/role';
 import { SessionService } from '../../../core/auth/session.service';
+import { extractErrorMessage } from '../../../core/http/api-error';
 
 /**
  * Redirection post-connexion par rôle (contrat `studentapi`, `components.schemas.Role` —
@@ -25,39 +25,6 @@ const ROLE_HOME: Record<Role, string> = {
   recruteur: '/recruteur',
   moderateur: '/moderation',
 };
-
-/**
- * Corps attendu dans `HttpErrorResponse.error` sur un 401 de `POST /auth/login`
- * (`AUTH_INVALID_CREDENTIALS`, contrat `studentapi` v0.2.0, `components.schemas.ErrorResponse`).
- * Redéfini localement, en LECTURE SEULE pour ce composant : ce n'est pas le contrat partagé,
- * seulement la forme minimale nécessaire pour extraire `message` en toute sécurité de
- * typage — jamais parsé, uniquement affiché tel quel (déjà traduit fr/en par le backend).
- */
-interface ApiErrorBody {
-  message: string;
-}
-
-function isApiErrorBody(value: unknown): value is ApiErrorBody {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    typeof (value as { message?: unknown }).message === 'string'
-  );
-}
-
-const GENERIC_ERROR_MESSAGE = 'Une erreur est survenue. Réessaie dans un instant.';
-
-/**
- * Extrait le message traduit d'un échec de `POST /auth/login` (`ErrorResponse.message`),
- * sans jamais parser son contenu. Retombe sur un message générique si la forme de l'erreur
- * est inattendue (ex. panne réseau, pas de réponse JSON du backend).
- */
-function extractErrorMessage(error: Error): string {
-  if (error instanceof HttpErrorResponse && isApiErrorBody(error.error)) {
-    return error.error.message;
-  }
-  return GENERIC_ERROR_MESSAGE;
-}
 
 /**
  * Écran de connexion, commun aux 3 rôles (étudiant / recruteur / modérateur) —

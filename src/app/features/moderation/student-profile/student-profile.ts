@@ -1,5 +1,4 @@
 import { DatePipe } from '@angular/common';
-import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
@@ -9,6 +8,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { map } from 'rxjs';
 
+import { extractErrorCode, extractErrorMessage } from '../../../core/http/api-error';
 import { injectModerationStudentProfileQuery } from '../data/moderation.queries';
 import {
   DayOfWeek,
@@ -44,49 +44,6 @@ const HOUSING_SITUATION_LABELS: Record<HousingSituation, string> = {
   seul: 'Vit seul(e)',
   avec_parents_tuteurs: 'Vit avec parents ou tuteurs',
 };
-
-/**
- * Corps attendu dans `HttpErrorResponse.error` sur un échec de
- * `/moderation/students/{userId}/profile` (contrat `studentapi`,
- * `components.schemas.ErrorResponse`). Redéfini localement, en LECTURE SEULE pour ce
- * composant — même pattern que `student-profile-form.ts`/`detail.ts` : `error` (code machine)
- * sert au `switch`/narrowing du 404 `PROFILE_NOT_FOUND`, `message` est uniquement affiché tel
- * quel, jamais parsé pour de la logique.
- */
-interface ApiErrorBody {
-  error?: string;
-  message: string;
-}
-
-function isApiErrorBody(value: unknown): value is ApiErrorBody {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    typeof (value as { message?: unknown }).message === 'string'
-  );
-}
-
-const GENERIC_ERROR_MESSAGE = 'Une erreur est survenue. Réessaie dans un instant.';
-
-/** Extrait le message traduit d'une erreur HTTP, sans jamais parser son contenu. */
-function extractErrorMessage(error: Error): string {
-  if (error instanceof HttpErrorResponse && isApiErrorBody(error.error)) {
-    return error.error.message;
-  }
-  return GENERIC_ERROR_MESSAGE;
-}
-
-/** Extrait le code machine (`ErrorResponse.error`) d'une erreur HTTP, `null` si absent/inattendu. */
-function extractModerationErrorCode(error: Error): ModerationErrorCode | null {
-  if (
-    error instanceof HttpErrorResponse &&
-    isApiErrorBody(error.error) &&
-    typeof error.error.error === 'string'
-  ) {
-    return error.error.error as ModerationErrorCode;
-  }
-  return null;
-}
 
 /**
  * Profil complet d'un étudiant, vu par la modération (T17, Épic 2) :
@@ -126,7 +83,7 @@ export class ModerationStudentProfile {
   protected readonly profileQuery = injectModerationStudentProfileQuery(this.userId);
 
   private isProfileNotFoundError(error: Error): boolean {
-    return extractModerationErrorCode(error) === 'PROFILE_NOT_FOUND';
+    return extractErrorCode<ModerationErrorCode>(error) === 'PROFILE_NOT_FOUND';
   }
 
   /**

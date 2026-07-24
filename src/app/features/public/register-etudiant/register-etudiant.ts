@@ -1,4 +1,3 @@
-import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -12,39 +11,7 @@ import { Router } from '@angular/router';
 import { injectRegisterMutation } from '../../../core/auth/auth.queries';
 import { RegisterRequest } from '../../../core/auth/auth.types';
 import { SessionService } from '../../../core/auth/session.service';
-
-/**
- * Corps attendu dans `HttpErrorResponse.error` sur un 409/422 de `POST /auth/register`
- * (contrat `studentapi` v0.2.0, `components.schemas.ErrorResponse`). Redéfini localement,
- * en LECTURE SEULE pour ce composant : ce n'est pas le contrat partagé, seulement la forme
- * minimale nécessaire pour extraire `message` en toute sécurité de typage — jamais parsé,
- * uniquement affiché tel quel (déjà traduit fr/en par le backend).
- */
-interface RegisterErrorBody {
-  message: string;
-}
-
-function isRegisterErrorBody(value: unknown): value is RegisterErrorBody {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    typeof (value as { message?: unknown }).message === 'string'
-  );
-}
-
-const GENERIC_ERROR_MESSAGE = 'Une erreur est survenue. Réessaie dans un instant.';
-
-/**
- * Extrait le message traduit d'une erreur `POST /auth/register` (`ErrorResponse.message`),
- * sans jamais parser son contenu. Retombe sur un message générique si la forme de l'erreur
- * est inattendue (ex. panne réseau, pas de réponse JSON du backend).
- */
-function extractErrorMessage(error: Error): string {
-  if (error instanceof HttpErrorResponse && isRegisterErrorBody(error.error)) {
-    return error.error.message;
-  }
-  return GENERIC_ERROR_MESSAGE;
-}
+import { extractErrorMessage } from '../../../core/http/api-error';
 
 /**
  * Écran d'inscription étudiant — `POST /auth/register` avec `role` fixé à `'etudiant'`

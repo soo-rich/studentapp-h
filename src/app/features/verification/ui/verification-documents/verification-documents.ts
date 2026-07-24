@@ -1,4 +1,3 @@
-import { HttpErrorResponse } from '@angular/common/http';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -17,6 +16,7 @@ import { MatSelectModule, MatSelectChange } from '@angular/material/select';
 
 import { Role } from '../../../../core/auth/role';
 import { SessionService } from '../../../../core/auth/session.service';
+import { extractErrorMessage } from '../../../../core/http/api-error';
 import { VerificationBadge } from '../../../../shared/verification-badge/verification-badge';
 import {
   injectDeleteVerificationDocumentMutation,
@@ -62,34 +62,6 @@ function formatFileSize(bytes: number): string {
     return `${Math.round(bytes / BYTES_PER_KO)} Ko`;
   }
   return `${(bytes / BYTES_PER_MO).toFixed(1)} Mo`;
-}
-
-/**
- * Corps attendu dans `HttpErrorResponse.error` sur un échec de `/verification/documents*`
- * (contrat `studentapi`, `components.schemas.ErrorResponse`). Redéfini localement, en LECTURE
- * SEULE pour ce composant — même pattern que `register-etudiant.ts`/`login.ts` : jamais parsé,
- * uniquement affiché tel quel (déjà traduit fr/en par le backend).
- */
-interface ApiErrorBody {
-  message: string;
-}
-
-function isApiErrorBody(value: unknown): value is ApiErrorBody {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    typeof (value as { message?: unknown }).message === 'string'
-  );
-}
-
-const GENERIC_ERROR_MESSAGE = 'Une erreur est survenue. Réessaie dans un instant.';
-
-/** Extrait le message traduit d'une erreur HTTP, sans jamais parser son contenu. */
-function extractErrorMessage(error: Error): string {
-  if (error instanceof HttpErrorResponse && isApiErrorBody(error.error)) {
-    return error.error.message;
-  }
-  return GENERIC_ERROR_MESSAGE;
 }
 
 /**

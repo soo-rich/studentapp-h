@@ -1,4 +1,3 @@
-import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
@@ -20,6 +19,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSelectModule } from '@angular/material/select';
 
+import { extractErrorCode, extractErrorMessage } from '../../../../core/http/api-error';
 import {
   injectStudentProfileQuery,
   injectUpsertStudentProfileMutation,
@@ -110,48 +110,6 @@ function startBeforeEndValidator(group: AbstractControl): ValidationErrors | nul
     return null;
   }
   return startTime < endTime ? null : { startNotBeforeEnd: true };
-}
-
-/**
- * Corps attendu dans `HttpErrorResponse.error` sur un échec de `/students/me/profile`
- * (contrat `studentapi`, `components.schemas.ErrorResponse`). Redéfini localement, en LECTURE
- * SEULE pour ce composant — même pattern que `verification-documents.ts`/`detail.ts` : le
- * code machine `error` est utilisé pour du `switch` (narrowing sûr), `message` uniquement
- * affiché tel quel, jamais parsé pour de la logique (voir doc `ProfileErrorCode`).
- */
-interface ApiErrorBody {
-  error?: string;
-  message: string;
-}
-
-function isApiErrorBody(value: unknown): value is ApiErrorBody {
-  return (
-    typeof value === 'object' &&
-    value !== null &&
-    typeof (value as { message?: unknown }).message === 'string'
-  );
-}
-
-const GENERIC_ERROR_MESSAGE = 'Une erreur est survenue. Réessaie dans un instant.';
-
-/** Extrait le message traduit d'une erreur HTTP, sans jamais parser son contenu. */
-function extractErrorMessage(error: Error): string {
-  if (error instanceof HttpErrorResponse && isApiErrorBody(error.error)) {
-    return error.error.message;
-  }
-  return GENERIC_ERROR_MESSAGE;
-}
-
-/** Extrait le code machine (`ErrorResponse.error`) d'une erreur HTTP, `null` si absent/inattendu. */
-function extractProfileErrorCode(error: Error): ProfileErrorCode | null {
-  if (
-    error instanceof HttpErrorResponse &&
-    isApiErrorBody(error.error) &&
-    typeof error.error.error === 'string'
-  ) {
-    return error.error.error as ProfileErrorCode;
-  }
-  return null;
 }
 
 /**
@@ -246,7 +204,7 @@ export class StudentProfileForm {
    * (profil pas encore créé), jamais affiché comme une erreur.
    */
   private isProfileNotFoundError(error: Error): boolean {
-    return extractProfileErrorCode(error) === 'PROFILE_NOT_FOUND';
+    return extractErrorCode<ProfileErrorCode>(error) === 'PROFILE_NOT_FOUND';
   }
 
   /** Message d'erreur du chargement du profil, `null` en succès OU sur le 404 nominal. */
@@ -268,7 +226,7 @@ export class StudentProfileForm {
     if (error === null) {
       return null;
     }
-    if (extractProfileErrorCode(error) === 'PROFILE_SENSITIVE_CONSENT_REQUIRED') {
+    if (extractErrorCode<ProfileErrorCode>(error) === 'PROFILE_SENSITIVE_CONSENT_REQUIRED') {
       return 'Coche la case de consentement pour pouvoir enregistrer les informations sensibles.';
     }
     return extractErrorMessage(error);
