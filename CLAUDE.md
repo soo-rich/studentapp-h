@@ -76,10 +76,15 @@ payload ou une réponse API destinés au front recruteur.
 - Build : `npm run build` (= `ng build`) → sortie dans `dist/`. Config `development` :
   `npm run watch` (= `ng build --watch --configuration development`).
 - Tests : `npm test` (= `ng test`), utilise le builder natif `@angular/build:unit-test`
-  (Vitest sous le capot, pas de `karma.conf.js`/Jasmine). Un seul fichier de test existe :
-  `src/app/app.spec.ts`. La syntaxe exacte pour scoper `ng test` à un fichier/nom de test
-  précis n'est pas vérifiée dans ce repo (pas d'exemple, pas de script dédié) — tester
-  `ng test -- <args>` (passthrough vers Vitest) avant de s'y fier.
+  (Vitest sous le capot, pas de `karma.conf.js`/Jasmine). Pour scoper la suite à un ou
+  plusieurs fichiers (vérifié dans ce repo) :
+  `npx ng test --include <glob> [--include <glob>…] --watch=false`. La forme
+  `ng test -- <args>` (passthrough vers Vitest) est **rejetée** par le schéma du builder
+  Angular — ne pas l'utiliser.
+  ⚠️ Ne lancer la suite complète que sérialisée : plusieurs runs concurrents (agents en
+  parallèle, build simultané) provoquent une contention CPU qui fait échouer des fichiers
+  sains en `Test timed out in 5000ms`. Devant un timeout, relancer en isolation avant de
+  conclure à une régression.
 - Pas de script `lint` : aucun ESLint configuré dans le repo.
 
 ## Architecture
