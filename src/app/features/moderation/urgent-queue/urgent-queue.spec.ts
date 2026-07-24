@@ -1,12 +1,14 @@
 import { HarnessLoader } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
-import { HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatButtonToggleGroupHarness } from '@angular/material/button-toggle/testing';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { provideTanStackQuery, QueryClient } from '@tanstack/angular-query-experimental';
 import { Observable, of, Subject, throwError } from 'rxjs';
 
+import { environment } from '../../../../environments/environment';
 import { User } from '../../../core/auth/auth.types';
 import { ModerationApiService } from '../data/moderation-api.service';
 import {
@@ -377,5 +379,90 @@ describe('UrgentQueue', () => {
 
     fixture.detectChanges();
     expect(query('#confirm-action-button')).toBeNull();
+  });
+});
+
+/**
+ * T20 — preuve d'un refetch RÉEL après une mutation de modération, via `HttpTestingController`
+ * (pas un espion sur `invalidateQueries`, voir `moderation.queries.spec.ts` T19). Ici
+ * `ModerationApiService` n'est PAS mocké : c'est le vrai service HTTP, wiré à un
+ * `HttpTestingController`, seule façon de constater qu'un second `GET /moderation/urgent-requests`
+ * part réellement après confirmation d'une décision de traitement (action inline portée par cet
+ * écran lui-même, contrairement à `moderation/queue` — voir `queue.spec.ts` pour l'écart assumé
+ * sur cet écran-là).
+ */
+describe('UrgentQueue — real HTTP refetch after a review mutation succeeds (T20)', () => {
+  let fixture: ComponentFixture<UrgentQueue>;
+  let httpMock: HttpTestingController;
+
+  const baseUrl = `${environment.apiBaseUrl}/moderation`;
+
+  function query<T extends Element = Element>(selector: string): T | null {
+    return fixture.nativeElement.querySelector(selector) as T | null;
+  }
+
+  /** Récupère (en la retirant de la file d'attente) le prochain GET réel sur la liste des demandes. */
+  function expectListGet() {
+    return httpMock.expectOne(
+      (req) => req.method === 'GET' && req.url === `${baseUrl}/urgent-requests`,
+    );
+  }
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [UrgentQueue],
+      providers: [
+        provideNoopAnimations(),
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideTanStackQuery(new QueryClient({ defaultOptions: { queries: { retry: false } } })),
+      ],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(UrgentQueue);
+    httpMock = TestBed.inject(HttpTestingController);
+    fixture.detectChanges();
+  });
+
+  afterEach(() => {
+    httpMock.verify();
+  });
+
+  it('emits a real second GET on the same list URL after confirming "prioritize", and the displayed content reflects the second response', async () => {
+    // 1er GET réel (montage) — la demande d'urgence qu'on va traiter.
+    const firstReq = await vi.waitFor(() => expectListGet());
+    firstReq.flush(buildPage({ items: [buildUrgentRequest({ id: 'urgent-1' })] }));
+
+    await vi.waitFor(() => {
+      fixture.detectChanges();
+      expect(fixture.nativeElement.textContent).toContain('Je traverse une période difficile');
+    });
+
+    // Action de modération réelle, déclenchée depuis l'écran (pas un appel direct à la mutation).
+    query<HTMLButtonElement>('#prioritize-button-urgent-1')!.click();
+    fixture.detectChanges();
+    query<HTMLButtonElement>('#confirm-action-button')!.click();
+
+    const postReq = await vi.waitFor(() =>
+      httpMock.expectOne(
+        (req) => req.method === 'POST' && req.url === `${baseUrl}/urgent-requests/urgent-1/review`,
+      ),
+    );
+    expect(postReq.request.body).toEqual({
+      decision: 'prioritize',
+    } satisfies UrgentRequestReviewRequest);
+    postReq.flush(buildUrgentRequest({ id: 'urgent-1', status: 'prioritized' }));
+
+    // PREUVE : un second GET réel part sur la même URL de liste (pas un espion sur
+    // `invalidateQueries`) — la demande traitée, passée à `prioritized`, ne correspond plus au
+    // filtre `pending` par défaut de cet écran : la seconde réponse le retire donc de la liste.
+    const secondReq = await vi.waitFor(() => expectListGet());
+    secondReq.flush(buildPage({ items: [], total: 0 }));
+
+    await vi.waitFor(() => {
+      fixture.detectChanges();
+      expect(fixture.nativeElement.textContent).not.toContain('Je traverse une période difficile');
+      expect(fixture.nativeElement.textContent).toContain('Aucune demande pour ce filtre.');
+    });
   });
 });
