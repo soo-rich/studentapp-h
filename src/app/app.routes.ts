@@ -1,6 +1,9 @@
 import { Routes } from '@angular/router';
 
 import { roleGuard } from './core/auth/role.guard';
+import { etudiantRoutes } from './features/etudiant/etudiant.routes';
+import { moderationApplicationsRoutes } from './features/moderation/moderation-applications.routes';
+import { recruteurRoutes } from './features/recruteur/recruteur.routes';
 
 /**
  * Arborescence de routes par espace (Épic 1) : public / étudiant / recruteur / back-office
@@ -69,6 +72,8 @@ export const routes: Routes = [
             (m) => m.UrgentRequestPage,
           ),
       },
+      // Parcours d'offres et candidatures étudiant (Épic 3).
+      ...etudiantRoutes,
     ],
   },
   {
@@ -76,20 +81,8 @@ export const routes: Routes = [
     canActivate: [roleGuard('recruteur')],
     loadComponent: () =>
       import('./layouts/recruteur-layout/recruteur-layout').then((m) => m.RecruteurLayout),
-    children: [
-      {
-        path: '',
-        loadComponent: () =>
-          import('./features/recruteur/dashboard/dashboard').then((m) => m.RecruteurDashboard),
-      },
-      {
-        path: 'verification',
-        loadComponent: () =>
-          import('./features/verification/ui/verification-documents/verification-documents').then(
-            (m) => m.VerificationDocuments,
-          ),
-      },
-    ],
+    // Dashboard, vérification, profil recruteur, offres et candidats (Épic 3).
+    children: recruteurRoutes,
   },
   {
     path: 'moderation',
@@ -117,6 +110,8 @@ export const routes: Routes = [
             (m) => m.ModerationStudentProfile,
           ),
       },
+      // File de candidatures (Épic 3) — segments statiques, doivent précéder `:userId`.
+      ...moderationApplicationsRoutes,
       {
         path: ':userId',
         loadComponent: () =>
